@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import {
@@ -11,6 +12,7 @@ import {
 } from "firebase/firestore";
 
 const TeacherDashboard = () => {
+  const navigate = useNavigate();
   const [className, setClassName] = useState("");
   const [section, setSection] = useState("");
   const [subject, setSubject] = useState("");
@@ -70,15 +72,15 @@ const TeacherDashboard = () => {
   };
 
   // 🔹 Load classrooms when dashboard opens
- useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
-    if (user) {
-      fetchMyClasses();
-    }
-  });
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchMyClasses();
+      }
+    });
 
-  return () => unsubscribe();
-}, []);
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -134,13 +136,18 @@ const TeacherDashboard = () => {
           <ul className="space-y-2">
             {myClasses.map((cls, index) => (
               <li key={index} className="p-3 bg-gray-700 rounded">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{cls.name}</span>
-                  <span className="text-sm bg-gray-600 px-2 py-1 rounded">
-                    Code: {cls.classCode}
-
-                  </span>
-                </div>
+                <li
+                  key={index}
+                  className="p-3 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 transition"
+                  onClick={() => navigate(`/teacher/class/${cls.classCode}`)}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{cls.name}</span>
+                    <span className="text-sm bg-gray-600 px-2 py-1 rounded">
+                      Code: {cls.classCode}
+                    </span>
+                  </div>
+                </li>
               </li>
             ))}
           </ul>
