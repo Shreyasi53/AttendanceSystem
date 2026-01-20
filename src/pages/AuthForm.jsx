@@ -1,4 +1,10 @@
 import React, { useState } from "react";
+import { auth, db } from "../firebase/firebaseConfig";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,51 +23,87 @@ const AuthForm = () => {
     });
   };
 
-  const handleSignupSubmit = (e) => {
+  const handleSignupSubmit = async (e) => {
     e.preventDefault();
-    console.log("Signup data:", formData);
+
+    if (!formData.role) {
+      alert("Please select a role");
+      return;
+    }
+
+    try {
+      // Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      const user = userCredential.user;
+
+      // Store user info in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        uid: user.uid
+      });
+
+      alert("Signup Successful!");
+      setIsLogin(true);
+      
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
- const handleLoginSubmit = (e) => {
-  e.preventDefault();
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
 
-  const savedRole = localStorage.getItem("role");
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
 
-  if (savedRole === "teacher") {
-    window.location.href = "/teacher/dashboard";
-  } else {
-    window.location.href = "/student/dashboard";
-  }
-};
+      const user = userCredential.user;
 
+      // Fetch user role
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
+
+      if (userData.role === "teacher") {
+        window.location.href = "/teacher/dashboard";
+      } else {
+        window.location.href = "/student/dashboard";
+      }
+
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 px-4">
       <div className="w-full max-w-md bg-gray-800 text-white rounded-2xl shadow-xl p-8">
-        {/* Tabs */}
+        
         <div className="flex justify-between mb-8">
           <button
-            className={`w-1/2 py-2 rounded-lg transition-all ${
-              isLogin ? "bg-white text-gray-900 font-semibold" : "text-gray-300"
-            }`}
+            className={`w-1/2 py-2 rounded-lg transition-all ${isLogin ? "bg-white text-gray-900 font-semibold" : "text-gray-300"}`}
             onClick={() => setIsLogin(true)}
           >
             Login
           </button>
 
           <button
-            className={`w-1/2 py-2 rounded-lg transition-all ${
-              !isLogin
-                ? "bg-white text-gray-900 font-semibold"
-                : "text-gray-300"
-            }`}
+            className={`w-1/2 py-2 rounded-lg transition-all ${!isLogin ? "bg-white text-gray-900 font-semibold" : "text-gray-300"}`}
             onClick={() => setIsLogin(false)}
           >
             Sign Up
           </button>
         </div>
 
-        {/* FORMS */}
         {isLogin ? (
           <form className="space-y-5" onSubmit={handleLoginSubmit}>
             <div>
@@ -76,9 +118,7 @@ const AuthForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-300 mb-1">
-                Password
-              </label>
+              <label className="block text-sm text-gray-300 mb-1">Password</label>
               <input
                 type="password"
                 name="password"
@@ -87,7 +127,6 @@ const AuthForm = () => {
                 onChange={handleChange}
               />
             </div>
-            <a href="#">Forget Password?</a>
 
             <button
               type="submit"
@@ -95,13 +134,12 @@ const AuthForm = () => {
             >
               Login
             </button>
-            <p>
-              {" "}
+
+            <p className="text-sm mt-3">
               Not a Member?{" "}
-              <a href="#" onClick={() => setIsLogin(false)}>
-                {" "}
-                Signup now{" "}
-              </a>{" "}
+              <span className="underline cursor-pointer" onClick={() => setIsLogin(false)}>
+                Signup now
+              </span>
             </p>
           </form>
         ) : (
@@ -129,9 +167,7 @@ const AuthForm = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-300 mb-1">
-                Password
-              </label>
+              <label className="block text-sm text-gray-300 mb-1">Password</label>
               <input
                 type="password"
                 name="password"
