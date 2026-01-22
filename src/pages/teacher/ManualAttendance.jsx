@@ -49,7 +49,7 @@ const ManualAttendance = ({ classCode, onBack }) => {
   }, []);
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg mt-6">
+    <div className="bg-card border border-white/10 rounded-2xl p-8">
       <h2 className="text-xl font-semibold mb-3">Manual Attendance</h2>
 
       {students.length === 0 ? (
@@ -73,14 +73,14 @@ const ManualAttendance = ({ classCode, onBack }) => {
 
       <button
         onClick={saveManualAttendance}
-        className="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
+        className="btn-primary px-4 py-2 rounded-lg hover:brightness-75"
       >
         Save Attendance
       </button>
-
+      
       <button
         onClick={onBack}
-        className="mt-4 ml-3 px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+        className="mt-4 ml-3 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
       >
         Back
       </button>

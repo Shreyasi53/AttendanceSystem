@@ -32,7 +32,6 @@ const AuthForm = () => {
     }
 
     try {
-      // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
@@ -41,7 +40,6 @@ const AuthForm = () => {
 
       const user = userCredential.user;
 
-      // Store user info in Firestore
       await setDoc(doc(db, "users", user.uid), {
         name: formData.name,
         email: formData.email,
@@ -51,7 +49,7 @@ const AuthForm = () => {
 
       alert("Signup Successful!");
       setIsLogin(true);
-      
+
     } catch (error) {
       alert(error.message);
     }
@@ -69,7 +67,6 @@ const AuthForm = () => {
 
       const user = userCredential.user;
 
-      // Fetch user role
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.data();
 
@@ -85,104 +82,155 @@ const AuthForm = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900 px-4">
-      <div className="w-full max-w-md bg-gray-800 text-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center px-4"
+         style={{ background: "var(--color-bg)", color: "var(--color-text)" }}>
+      
+      <div className="w-full max-w-md rounded-2xl shadow-xl p-8 border border-white/10"
+           style={{ background: "var(--color-bg-card)" }}>
         
-        <div className="flex justify-between mb-8">
-          <button
-            className={`w-1/2 py-2 rounded-lg transition-all ${isLogin ? "bg-white text-gray-900 font-semibold" : "text-gray-300"}`}
-            onClick={() => setIsLogin(true)}
-          >
-            Login
-          </button>
+        <div
+  className="flex mb-8 rounded-lg overflow-hidden gap-2"
+  style={{ background: "var(--color-bg-input)" }}
+>
+  <button
+    className={`flex-1 py-2 text-sm font-semibold transition-all rounded-lg ${
+      isLogin ? "text-black" : "text-muted"
+    }`}
+    style={isLogin ? { background: "white" } : {}}
+    onClick={() => setIsLogin(true)}
+  >
+    Login
+  </button>
 
-          <button
-            className={`w-1/2 py-2 rounded-lg transition-all ${!isLogin ? "bg-white text-gray-900 font-semibold" : "text-gray-300"}`}
-            onClick={() => setIsLogin(false)}
-          >
-            Sign Up
-          </button>
-        </div>
+  <button
+    className={`flex-1 py-2 text-sm font-semibold transition-all rounded-lg ${
+      !isLogin ? "text-black" : "text-muted"
+    }`}
+    style={!isLogin ? { background: "white" } : {}}
+    onClick={() => setIsLogin(false)}
+  >
+    Sign Up
+  </button>
+</div>
 
+
+        {/* Forms */}
         {isLogin ? (
+          // LOGIN FORM
           <form className="space-y-5" onSubmit={handleLoginSubmit}>
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Email</label>
+              <label className="text-sm text-muted mb-1 block">Email</label>
               <input
                 type="email"
                 name="email"
-                className="w-full p-3 rounded-lg bg-gray-700 outline-none border border-gray-600 focus:border-blue-500"
-                placeholder="Enter your email"
                 onChange={handleChange}
+                placeholder="Enter your email"
+                className="w-full p-3 rounded-lg outline-none border text-sm"
+                style={{
+                  background: "var(--color-bg-input)",
+                  borderColor: "var(--color-text-muted)",
+                  color: "var(--color-text)"
+                }}
               />
             </div>
 
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Password</label>
+              <label className="text-sm text-muted mb-1 block">Password</label>
               <input
                 type="password"
                 name="password"
-                className="w-full p-3 rounded-lg bg-gray-700 outline-none border border-gray-600 focus:border-blue-500"
-                placeholder="Enter your password"
                 onChange={handleChange}
+                placeholder="Enter your password"
+                className="w-full p-3 rounded-lg outline-none border text-sm"
+                style={{
+                  background: "var(--color-bg-input)",
+                  borderColor: "var(--color-text-muted)",
+                  color: "var(--color-text)"
+                }}
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-green-600 rounded-lg font-semibold mt-2 hover:bg-green-700 transition-all"
+              className="w-full py-3 font-semibold rounded-lg btn-success"
+              style={{ background: "var(--color-success)" }}
             >
               Login
             </button>
 
-            <p className="text-sm mt-3">
+            <p className="text-sm mt-3 text-muted">
               Not a Member?{" "}
-              <span className="underline cursor-pointer" onClick={() => setIsLogin(false)}>
+              <span
+                className="underline cursor-pointer"
+                style={{ color: "var(--color-primary)" }}
+                onClick={() => setIsLogin(false)}
+              >
                 Signup now
               </span>
             </p>
           </form>
         ) : (
+          // SIGNUP FORM
           <form className="space-y-5" onSubmit={handleSignupSubmit}>
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Name</label>
+              <label className="text-sm text-muted mb-1 block">Name</label>
               <input
                 type="text"
                 name="name"
-                className="w-full p-3 rounded-lg bg-gray-700 outline-none border border-gray-600 focus:border-blue-500"
-                placeholder="Enter your name"
                 onChange={handleChange}
+                placeholder="Enter your name"
+                className="w-full p-3 rounded-lg outline-none border text-sm"
+                style={{
+                  background: "var(--color-bg-input)",
+                  borderColor: "var(--color-text-muted)",
+                  color: "var(--color-text)"
+                }}
               />
             </div>
 
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Email</label>
+              <label className="text-sm text-muted mb-1 block">Email</label>
               <input
                 type="email"
                 name="email"
-                className="w-full p-3 rounded-lg bg-gray-700 outline-none border border-gray-600 focus:border-blue-500"
-                placeholder="Enter your email"
                 onChange={handleChange}
+                placeholder="Enter your email"
+                className="w-full p-3 rounded-lg outline-none border text-sm"
+                style={{
+                  background: "var(--color-bg-input)",
+                  borderColor: "var(--color-text-muted)",
+                  color: "var(--color-text)"
+                }}
               />
             </div>
 
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Password</label>
+              <label className="text-sm text-muted mb-1 block">Password</label>
               <input
                 type="password"
                 name="password"
-                className="w-full p-3 rounded-lg bg-gray-700 outline-none border border-gray-600 focus:border-blue-500"
-                placeholder="Create a password"
                 onChange={handleChange}
+                placeholder="Create a password"
+                className="w-full p-3 rounded-lg outline-none border text-sm"
+                style={{
+                  background: "var(--color-bg-input)",
+                  borderColor: "var(--color-text-muted)",
+                  color: "var(--color-text)"
+                }}
               />
             </div>
 
             <div>
-              <label className="block text-sm text-gray-300 mb-1">Role</label>
+              <label className="text-sm text-muted mb-1 block">Role</label>
               <select
                 name="role"
-                className="w-full p-3 rounded-lg bg-gray-700 outline-none border border-gray-600 text-gray-300 focus:border-blue-500"
                 onChange={handleChange}
+                className="w-full p-3 rounded-lg outline-none border text-sm"
+                style={{
+                  background: "var(--color-bg-input)",
+                  borderColor: "var(--color-text-muted)",
+                  color: "var(--color-text)"
+                }}
               >
                 <option value="">Select role</option>
                 <option value="student">Student</option>
@@ -192,7 +240,8 @@ const AuthForm = () => {
 
             <button
               type="submit"
-              className="w-full py-3 bg-green-600 rounded-lg font-semibold mt-2 hover:bg-green-700 transition-all"
+              className="w-full py-3 font-semibold rounded-lg btn-success"
+              style={{ background: "var(--color-success)" }}
             >
               Sign Up
             </button>

@@ -77,64 +77,72 @@ const ClassroomDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <h1 className="text-2xl font-bold mb-4">Classroom Details</h1>
-
-      {/* Class Info */}
-      <div className="bg-gray-800 p-4 rounded-lg mb-6">
-        <p><span className="font-semibold">Class:</span> {classInfo.name} ({classInfo.section})</p>
-        <p><span className="font-semibold">Subject:</span> {classInfo.subject}</p>
-        <p><span className="font-semibold">Class Code:</span> {classCode}</p>
-        <p><span className="font-semibold">Students:</span> {students.length}</p>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-3 mb-6">
-        <button
-          className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
-          onClick={() => navigate(`/teacher/class/${classCode}/attendance`)}
-        >
-          Take Attendance
-        </button>
-
-        <button
-          className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700"
-          onClick={() => alert("Attendance history coming soon!")}
-        >
-          View Attendance
-        </button>
-      </div>
-
-      {/* Students List */}
-      <div className="bg-gray-800 p-4 rounded-lg">
-        <h2 className="text-xl mb-3 font-semibold">Students List</h2>
-
-        {students.length === 0 ? (
-          <p className="text-gray-400">No students have joined yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {students.map((std, index) => (
-              <li
-                key={index}
-                className="p-3 bg-gray-700 rounded flex justify-between items-center"
-              >
-                <span>
-                  <span className="font-semibold">{std.rollNo}</span> — {std.studentName}
-                </span>
-
-                <button
-                  className="text-red-400 hover:underline"
-                  onClick={() => removeStudent(std.uid)}
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+  <div className="space-y-10 space-x-1">
+    <div className="bg-card border border-white/10 rounded-2xl p-6 space-y-2 shadow">
+      <p>
+        <span className="font-semibold">Class:</span> {classInfo.name} ({classInfo.section})
+      </p>
+      <p>
+        <span className="font-semibold">Subject:</span> {classInfo.subject}
+      </p>
+      <p>
+        <span className="font-semibold">Class Code:</span> {classCode}
+      </p>
+      <p>
+        <span className="font-semibold">Total Students:</span> {students.length}
+      </p>
     </div>
-  );
+
+   
+    <div className="flex gap-3">
+      <button
+        onClick={() => navigate(`/teacher/class/${classCode}/attendance`)}
+        className="btn-primary px-4 py-2 rounded-lg font-medium hover:brightness-90"
+      >
+        Take Attendance
+      </button>
+
+      <button
+        onClick={() => alert("Attendance history coming soon!")}
+        className="bg-input px-4 py-2 rounded-lg text-white hover:brightness-90 border border-white/10"
+      >
+        View Attendance
+      </button>
+    </div>
+
+    {/* Students List */}
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold">Students List</h2>
+
+      {students.length === 0 ? (
+        <p className="text-muted">No students have joined yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {students.map((std, index) => (
+            <div
+              key={index}
+              className="bg-card border border-white/10 rounded-xl p-4 flex justify-between items-center shadow-sm"
+            >
+              <div>
+                <p className="font-medium">
+                  {std.rollNo} • {std.studentName}
+                </p>
+              </div>
+              <button
+                className="text-red-400 hover:underline"
+                onClick={() => removeStudent(std.uid)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+
+  </div>
+);
+
 };
 
 export default ClassroomDetail;

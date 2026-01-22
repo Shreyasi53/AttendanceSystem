@@ -44,32 +44,48 @@ const QrAttendance = ({ classCode, onBack }) => {
   }, []);
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg mt-6 text-center">
-      <h2 className="text-xl font-semibold mb-3">QR Mode Active</h2>
+  <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center space-y-4 shadow">
 
-      {qrActive && (
-        <div className="w-full flex justify-center">
-        <div className="flex flex-col item-center gap-3">
-          <QRCode value={`${classCode}|${sessionId}`} size={200} bgColor="#1F2937"
-            fgColor="#10B981" />
-          <p className="mt-3 text-gray-300">Session: {sessionId}</p>
-          <button
-            onClick={stopQrSession}
-            className="mt-4 px-4 py-2 bg-red-600 rounded hover:bg-red-700"
-          >
-            Stop Attendance
-          </button>
-        </div>
-        </div>
-      )}
+    {/* Title */}
+    <h2 className="text-xl font-semibold">QR Mode Active</h2>
 
-      {!qrActive && sessionId && (
-        <p className="text-red-400 font-semibold mt-3">
-          QR Attendance Ended!
+    {/* QR Active View */}
+    {qrActive && (
+      <div className="flex flex-col items-center space-y-4">
+        
+        {/* QR Code */}
+        <QRCode
+          value={`${classCode}|${sessionId}`}
+          size={200}
+          bgColor="var(--color-bg-card)"
+          fgColor="var(--color-success)"
+        />
+
+        {/* Session ID */}
+        <p className="text-muted text-sm">
+          Session: <span className="text-white font-medium">{sessionId}</span>
         </p>
-      )}
-    </div>
-  );
+
+        {/* Stop Button */}
+        <button
+          onClick={stopQrSession}
+          className="px-4 py-2 rounded-lg font-medium text-white bg-red-600 hover:brightness-90"
+        >
+          Stop Attendance
+        </button>
+      </div>
+    )}
+
+    {/* QR Ended State */}
+    {!qrActive && sessionId && (
+      <p className="text-red-400 font-medium">
+        QR Attendance Ended!
+      </p>
+    )}
+
+  </div>
+);
+
 };
 
 export default QrAttendance;
