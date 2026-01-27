@@ -5,9 +5,11 @@ import {
   signInWithEmailAndPassword
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import { Eye, EyeOff } from "lucide-react"; // <-- Added
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false); // <-- Added
 
   const [formData, setFormData] = useState({
     name: "",
@@ -82,37 +84,38 @@ const AuthForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-         style={{ background: "var(--color-bg)", color: "var(--color-text)" }}>
-      
-      <div className="w-full max-w-md rounded-2xl shadow-xl p-8 border border-white/10"
-           style={{ background: "var(--color-bg-card)" }}>
-        
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: "var(--color-bg)", color: "var(--color-text)" }}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl shadow-xl p-8 border border-white/10"
+        style={{ background: "var(--color-bg-card)" }}
+      >
         <div
-  className="flex mb-8 rounded-lg overflow-hidden gap-2"
-  style={{ background: "var(--color-bg-input)" }}
->
-  <button
-    className={`flex-1 py-2 text-sm font-semibold transition-all rounded-lg ${
-      isLogin ? "text-black" : "text-muted"
-    }`}
-    style={isLogin ? { background: "white" } : {}}
-    onClick={() => setIsLogin(true)}
-  >
-    Login
-  </button>
+          className="flex mb-8 rounded-lg overflow-hidden gap-2"
+          style={{ background: "var(--color-bg-input)" }}
+        >
+          <button
+            className={`flex-1 py-2 text-sm font-semibold transition-all rounded-lg ${
+              isLogin ? "text-black" : "text-muted"
+            }`}
+            style={isLogin ? { background: "white" } : {}}
+            onClick={() => setIsLogin(true)}
+          >
+            Login
+          </button>
 
-  <button
-    className={`flex-1 py-2 text-sm font-semibold transition-all rounded-lg ${
-      !isLogin ? "text-black" : "text-muted"
-    }`}
-    style={!isLogin ? { background: "white" } : {}}
-    onClick={() => setIsLogin(false)}
-  >
-    Sign Up
-  </button>
-</div>
-
+          <button
+            className={`flex-1 py-2 text-sm font-semibold transition-all rounded-lg ${
+              !isLogin ? "text-black" : "text-muted"
+            }`}
+            style={!isLogin ? { background: "white" } : {}}
+            onClick={() => setIsLogin(false)}
+          >
+            Sign Up
+          </button>
+        </div>
 
         {/* Forms */}
         {isLogin ? (
@@ -129,25 +132,34 @@ const AuthForm = () => {
                 style={{
                   background: "var(--color-bg-input)",
                   borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)"
+                  color: "var(--color-text)",
                 }}
               />
             </div>
 
             <div>
               <label className="text-sm text-muted mb-1 block">Password</label>
-              <input
-                type="password"
-                name="password"
-                onChange={handleChange}
-                placeholder="Enter your password"
-                className="w-full p-3 rounded-lg outline-none border text-sm"
-                style={{
-                  background: "var(--color-bg-input)",
-                  borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)"
-                }}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  className="w-full p-3 rounded-lg outline-none border text-sm pr-10"
+                  style={{
+                    background: "var(--color-bg-input)",
+                    borderColor: "var(--color-text-muted)",
+                    color: "var(--color-text)",
+                  }}
+                />
+                <span
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                  style={{ color: "var(--color-text-muted)" }}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </span>
+              </div>
             </div>
 
             <button
@@ -183,7 +195,7 @@ const AuthForm = () => {
                 style={{
                   background: "var(--color-bg-input)",
                   borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)"
+                  color: "var(--color-text)",
                 }}
               />
             </div>
@@ -199,25 +211,34 @@ const AuthForm = () => {
                 style={{
                   background: "var(--color-bg-input)",
                   borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)"
+                  color: "var(--color-text)",
                 }}
               />
             </div>
 
             <div>
               <label className="text-sm text-muted mb-1 block">Password</label>
-              <input
-                type="password"
-                name="password"
-                onChange={handleChange}
-                placeholder="Create a password"
-                className="w-full p-3 rounded-lg outline-none border text-sm"
-                style={{
-                  background: "var(--color-bg-input)",
-                  borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)"
-                }}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  onChange={handleChange}
+                  placeholder="Create a password"
+                  className="w-full p-3 rounded-lg outline-none border text-sm pr-10"
+                  style={{
+                    background: "var(--color-bg-input)",
+                    borderColor: "var(--color-text-muted)",
+                    color: "var(--color-text)",
+                  }}
+                />
+                <span
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                  style={{ color: "var(--color-text-muted)" }}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </span>
+              </div>
             </div>
 
             <div>
@@ -229,7 +250,7 @@ const AuthForm = () => {
                 style={{
                   background: "var(--color-bg-input)",
                   borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)"
+                  color: "var(--color-text)",
                 }}
               >
                 <option value="">Select role</option>

@@ -17,11 +17,11 @@ const TeacherDashboard = () => {
   const [section, setSection] = useState("");
   const [subject, setSubject] = useState("");
   const [myClasses, setMyClasses] = useState([]);
-  // Helper to generate Code
+  
   const generateClassCode = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   };
-  // Function to Create Class (Firestore
+  
   const handleCreateClass = async (e) => {
     e.preventDefault();
 
@@ -43,7 +43,6 @@ const TeacherDashboard = () => {
       await setDoc(doc(db, "classrooms", classCode), classData);
       alert("Classroom Created!");
 
-      // Refresh list
       fetchMyClasses();
 
       setClassName("");
@@ -83,7 +82,6 @@ const TeacherDashboard = () => {
 
   return (
     <div className="space-y-10">
-      {/* Create Classroom */}
       <div className="rounded-2xl bg-card border border-white/10 p-6 space-y-5 shadow-sm">
         <h2 className="text-xl font-medium">Create Classroom</h2>
 
