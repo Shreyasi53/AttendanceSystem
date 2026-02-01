@@ -103,7 +103,7 @@ const ClassroomDetail = () => {
       </button>
 
       <button
-        onClick={() => alert("Attendance history coming soon!")}
+        onClick={() => navigate(`/teacher/class/${classCode}/history`)}
         className="bg-input px-4 py-2 rounded-lg text-white hover:brightness-90 border border-white/10"
       >
         View Attendance

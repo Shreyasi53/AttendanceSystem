@@ -88,16 +88,45 @@ const StudentDashboard = () => {
         <div className="p-6 rounded-xl bg-card border border-white/10 shadow-lg shadow-black/30 backdrop-blur-sm space-y-4">
           <h2 className="text-xl font-semibold">Join a Classroom</h2>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               value={classCode}
               onChange={(e) => setClassCode(e.target.value)}
               placeholder="Enter class code"
-              className="flex-1 h-12 px-4 bg-input/90 text-(--color-text) border border-white/10 rounded-lg shadow-inner placeholder-(--color-text-muted) focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)/40 outline-none"
+              className="
+      w-full
+      sm:flex-1
+      h-12
+      px-4
+      bg-input/90
+      text-[var(--color-text)]
+      border
+      border-white/10
+      rounded-lg
+      shadow-inner
+      placeholder-[var(--color-text-muted)]
+      focus:border-[var(--color-primary)]
+      focus:ring-1
+      focus:ring-[var(--color-primary)]/40
+      outline-none
+    "
             />
+
             <button
               onClick={checkClassroom}
-              className="px-5 h-12 rounded-lg bg-(--color-primary) hover:bg-(--color-primary)/80 text-white font-medium transition-colors"
+              className="
+      w-full
+      sm:w-auto
+      px-5
+      h-12
+      rounded-lg
+      bg-[var(--color-primary)]
+      text-white
+      font-medium
+      transition-colors
+      sm:hover:opacity-80
+      active:scale-95
+    "
             >
               Check
             </button>
