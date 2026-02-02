@@ -9,11 +9,12 @@ import {
   deleteDoc
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { useAlert } from "../../context/AlertContext";
 
 const ClassroomDetail = () => {
   const { classCode } = useParams();
   const navigate = useNavigate();
-
+  const { showAlert, showConfirm } = useAlert();
   const [classInfo, setClassInfo] = useState(null);
   const [students, setStudents] = useState([]);
 
@@ -23,7 +24,7 @@ const ClassroomDetail = () => {
     const classSnap = await getDoc(classRef);
 
     if (!classSnap.exists()) {
-      alert("Classroom not found!");
+      showAlert("Classroom not found!");
       return;
     }
 
@@ -45,14 +46,15 @@ const ClassroomDetail = () => {
   };
 
   // Remove student from class
-  const removeStudent = async (uid) => {
-    if (!window.confirm("Remove this student?")) return;
-
+  const removeStudent = (uid) => {
+  showConfirm("Remove this student?", async () => {
     const ref = doc(db, "classrooms", classCode, "students", uid);
     await deleteDoc(ref);
-
     fetchStudents();
-  };
+    showAlert("Student removed", "success");
+  });
+};
+;
 
   // Check auth + fetch
   useEffect(() => {

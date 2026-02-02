@@ -7,9 +7,10 @@ import {
   setDoc,
   serverTimestamp
 } from "firebase/firestore";
+import { useAlert } from "../../context/AlertContext";
 
 const ManualAttendance = ({ classCode, onBack }) => {
-
+  const { showAlert } = useAlert();
   const [students, setStudents] = useState([]);
   const [selected, setSelected] = useState({});
 
@@ -40,7 +41,7 @@ const ManualAttendance = ({ classCode, onBack }) => {
       createdAt: serverTimestamp(),
     });
 
-    alert("Attendance Saved!");
+    showAlert("Attendance Saved!");
     onBack();
   };
 

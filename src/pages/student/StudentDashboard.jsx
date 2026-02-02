@@ -4,8 +4,10 @@ import { doc, getDoc, setDoc, getDocs, collection } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { Camera } from "lucide-react";
+import { useAlert } from "../../context/AlertContext";
 
 const StudentDashboard = () => {
+  const { showAlert } = useAlert(); 
   const [classCode, setClassCode] = useState("");
   const [classExists, setClassExists] = useState(false);
   const [studentName, setStudentName] = useState("");
@@ -19,7 +21,7 @@ const StudentDashboard = () => {
     const docSnap = await getDoc(classRef);
 
     if (!docSnap.exists()) {
-      alert("Invalid class code!");
+      showAlert("Invalid class code!");
       setClassExists(false);
     } else {
       setClassExists(true);
@@ -31,7 +33,7 @@ const StudentDashboard = () => {
     e.preventDefault();
 
     const user = auth.currentUser;
-    if (!user) return alert("Not logged in!");
+    if (!user) return showAlert("Not logged in!");
 
     const classId = classCode.toUpperCase();
     const studentRef = doc(db, "classrooms", classId, "students", user.uid);
@@ -43,7 +45,7 @@ const StudentDashboard = () => {
       joinedAt: new Date(),
     });
 
-    alert("Joined Classroom Successfully!");
+    showAlert("Joined Classroom Successfully!");
 
     // reset UI
     setClassExists(false);

@@ -10,13 +10,15 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import { useAlert } from "../../context/AlertContext";
+
 
 const MAX_DISTANCE = 300; // meters allowed (just adjust later)
 
 export default function Scan() {
   const navigate = useNavigate();
   const user = auth.currentUser;
-
+  const { showAlert } = useAlert();
   const [waiting, setWaiting] = useState(false);
   const [scanned, setScanned] = useState(false);
 
@@ -77,12 +79,12 @@ export default function Scan() {
           )
           .catch((err) => {
             console.error("CAMERA START FAILED:", err);
-            alert("Camera failed to start. Allow camera permissions & retry.");
+            showAlert("Camera failed to start. Allow camera permissions & retry.");
           });
       })
       .catch((err) => {
         console.error("CAMERA FETCH ERROR:", err);
-        alert("No camera found on this device.");
+        showAlert("No camera found on this device.");
       });
 
     return () => {
@@ -114,8 +116,8 @@ export default function Scan() {
         );
 
         const snap = await getDoc(sessionRef);
-        if (!snap.exists()) return alert("Invalid Session!");
-        if (snap.data().status !== "active") return alert("Session Closed!");
+        if (!snap.exists()) return showAlert("Invalid Session!");
+        if (snap.data().status !== "active") return showAlert("Session Closed!");
 
         // === fetch student info ===
         const studentRef = doc(
@@ -150,7 +152,7 @@ export default function Scan() {
         setWaiting(true);
         waitForTeacherStop(sessionRef, pendingRef);
       },
-      () => alert("Location required!"),
+      () => showAlert("Location required!"),
     );
   };
 
@@ -164,7 +166,7 @@ export default function Scan() {
         try {
           await deleteDoc(pendingRef);
         } catch {}
-        alert("Attendance Recorded!");
+        showAlert("Attendance Recorded!");
         navigate(-1);
       }
     });

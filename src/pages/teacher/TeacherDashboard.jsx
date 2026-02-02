@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
+import { useAlert } from "../../context/AlertContext"; 
 import {
   doc,
   setDoc,
@@ -12,21 +13,22 @@ import {
 } from "firebase/firestore";
 
 const TeacherDashboard = () => {
+  const { showAlert } = useAlert();
   const navigate = useNavigate();
   const [className, setClassName] = useState("");
   const [section, setSection] = useState("");
   const [subject, setSubject] = useState("");
   const [myClasses, setMyClasses] = useState([]);
-  
+
   const generateClassCode = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   };
-  
+
   const handleCreateClass = async (e) => {
     e.preventDefault();
 
     const user = auth.currentUser;
-    if (!user) return alert("Not logged in!");
+    if (!user) return showAlert("Not logged in!", "error");
 
     const classCode = generateClassCode();
 
@@ -41,7 +43,7 @@ const TeacherDashboard = () => {
 
     try {
       await setDoc(doc(db, "classrooms", classCode), classData);
-      alert("Classroom Created!");
+      showAlert("Classroom Created!", "success");
 
       fetchMyClasses();
 
@@ -49,16 +51,17 @@ const TeacherDashboard = () => {
       setSection("");
       setSubject("");
     } catch (error) {
-      alert("Error: " + error.message);
+      showAlert("Error: " + error.message, "error"); 
     }
   };
+
   const fetchMyClasses = async () => {
     const user = auth.currentUser;
     if (!user) return;
 
     const q = query(
       collection(db, "classrooms"),
-      where("teacherId", "==", user.uid),
+      where("teacherId", "==", user.uid)
     );
     const querySnapshot = await getDocs(q);
 
@@ -122,7 +125,7 @@ const TeacherDashboard = () => {
         </form>
       </div>
 
-      {/* My Classrooms */}
+      
       <div className="space-y-4">
         <h2 className="text-xl font-medium">My Classrooms</h2>
 

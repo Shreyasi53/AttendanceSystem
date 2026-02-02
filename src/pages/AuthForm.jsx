@@ -5,11 +5,13 @@ import {
   signInWithEmailAndPassword
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { Eye, EyeOff } from "lucide-react"; // <-- Added
+import { Eye, EyeOff } from "lucide-react"; 
+import { useAlert } from "../context/AlertContext";
 
 const AuthForm = () => {
+  const { showAlert } = useAlert();
   const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false); // <-- Added
+  const [showPassword, setShowPassword] = useState(false); 
 
   const [formData, setFormData] = useState({
     name: "",
@@ -29,7 +31,7 @@ const AuthForm = () => {
     e.preventDefault();
 
     if (!formData.role) {
-      alert("Please select a role");
+      showAlert("Please select a role", "error");
       return;
     }
 
@@ -49,11 +51,11 @@ const AuthForm = () => {
         uid: user.uid
       });
 
-      alert("Signup Successful!");
+      showAlert("Signup Successful!", "success");
       setIsLogin(true);
 
     } catch (error) {
-      alert(error.message);
+      showAlert(error.message, "error");
     }
   };
 
@@ -79,7 +81,7 @@ const AuthForm = () => {
       }
 
     } catch (error) {
-      alert(error.message);
+      showAlert(error.message);
     }
   };
 
@@ -182,7 +184,7 @@ const AuthForm = () => {
             </p>
           </form>
         ) : (
-          // SIGNUP FORM
+          
           <form className="space-y-5" onSubmit={handleSignupSubmit}>
             <div>
               <label className="text-sm text-muted mb-1 block">Name</label>
