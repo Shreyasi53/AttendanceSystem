@@ -23,7 +23,6 @@ const TeacherDashboard = () => {
   const [myClasses, setMyClasses] = useState([]);
   const [openMenu, setOpenMenu] = useState(null);
 
-
   const generateClassCode = () =>
     Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -71,7 +70,7 @@ const TeacherDashboard = () => {
 
     const q = query(
       collection(db, "classrooms"),
-      where("teacherId", "==", user.uid)
+      where("teacherId", "==", user.uid),
     );
 
     const snap = await getDocs(q);
@@ -79,7 +78,6 @@ const TeacherDashboard = () => {
     snap.forEach((doc) => list.push(doc.data()));
     setMyClasses(list);
   };
-
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -94,113 +92,131 @@ const TeacherDashboard = () => {
     return () => window.removeEventListener("click", close);
   }, []);
 
-
   return (
-    <div className="space-y-10 max-w-6xl mx-auto px-3 sm:px-6">
-
-      <div className="rounded-2xl bg-card border border-white/10 p-5 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-medium mb-4">
-          Create Classroom
-        </h2>
-
-        <form
-          onSubmit={handleCreateClass}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-        >
-          <input
-            value={className}
-            onChange={(e) => setClassName(e.target.value)}
-            placeholder="Classroom Name"
-            className="h-12 px-4 bg-input border border-white/10 rounded-lg"
-            required
-          />
-          <input
-            value={section}
-            onChange={(e) => setSection(e.target.value)}
-            placeholder="Section (e.g A)"
-            className="h-12 px-4 bg-input border border-white/10 rounded-lg"
-            required
-          />
-          <input
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="Subject Name"
-            className="h-12 px-4 bg-input border border-white/10 rounded-lg"
-            required
-          />
-
-          <div className="sm:col-span-3 flex justify-center">
-            <button className="btn-primary px-10 h-11 rounded-lg">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-1">
+          <div className="rounded-2xl bg-card border border-white/10 p-5 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-medium mb-4">
               Create Classroom
-            </button>
+            </h2>
+
+            <form onSubmit={handleCreateClass} className="space-y-4">
+              <input
+                value={className}
+                onChange={(e) => setClassName(e.target.value)}
+                placeholder="Classroom Name"
+                className="h-12 w-full px-4 bg-input border border-white/10 rounded-lg"
+                required
+              />
+
+              <input
+                value={section}
+                onChange={(e) => setSection(e.target.value)}
+                placeholder="Section (e.g A)"
+                className="h-12 w-full px-4 bg-input border border-white/10 rounded-lg"
+                required
+              />
+
+              <input
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Subject Name"
+                className="h-12 w-full px-4 bg-input border border-white/10 rounded-lg"
+                required
+              />
+
+              <button className="btn-primary w-full h-11 rounded-lg">
+                Create Classroom
+              </button>
+            </form>
           </div>
-        </form>
-      </div>
+        </div>
 
-      <div className="space-y-4">
-        <h2 className="text-lg sm:text-xl font-medium">My Classrooms</h2>
+        <div className="lg:col-span-2 flex flex-col space-y-4">
+          <h2 className="text-lg sm:text-xl font-medium">My Classrooms</h2>
 
-        {myClasses.length === 0 ? (
-          <p className="text-muted text-sm">No classrooms created yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myClasses.map((cls) => (
-              <div
-                key={cls.classCode}
-                onClick={() => navigate(`/teacher/class/${cls.classCode}`)}
-                className="relative rounded-xl bg-card border border-white/10 p-4 cursor-pointer hover:border-primary/40 transition">
+          {myClasses.length === 0 ? (
+            <p className="text-muted text-sm">No classrooms created yet.</p>
+          ) : (
+            <div
+              className="
+        flex flex-col gap-4
+        max-h-[520px]
+        overflow-y-auto
+        pr-2
+      "
+            >
+              {myClasses.map((cls) => (
+                <div
+                  key={cls.classCode}
+                  onClick={() => navigate(`/teacher/class/${cls.classCode}`)}
+                  className="
+            relative rounded-xl bg-card
+            border border-white/10
+            p-4 cursor-pointer
+            hover:border-primary/40
+            transition
+          "
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium">{cls.name}</h3>
+                      <p className="text-muted text-sm mt-1">{cls.subject}</p>
+                    </div>
 
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">{cls.name}</h3>
-                    <p className="text-muted text-sm mt-1"> {cls.subject} </p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenu(
+                          openMenu === cls.classCode ? null : cls.classCode,
+                        );
+                      }}
+                      className="text-muted hover:text-white px-2"
+                    >
+                      ⋮
+                    </button>
                   </div>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenMenu(
-                        openMenu === cls.classCode ? null : cls.classCode
-                      );
-                    }}
-                    className="text-muted hover:text-white px-2"
-                  >
-                    ⋮
-                  </button>
+                  {openMenu === cls.classCode && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="
+                absolute right-3 top-10 w-44
+                bg-black border border-white/10
+                rounded-lg shadow-lg z-50
+              "
+                    >
+                      <button
+                        onClick={() => {
+                          copyClassCode(cls.classCode);
+                          setOpenMenu(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-white/10"
+                      >
+                        📋 Copy class code
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          deleteClassroom(cls.classCode);
+                          setOpenMenu(null);
+                        }}
+                        className="
+                  w-full text-left px-4 py-2
+                  text-sm text-red-400
+                  hover:bg-red-500/10
+                "
+                      >
+                        🗑 Delete classroom
+                      </button>
+                    </div>
+                  )}
                 </div>
-
-                {openMenu === cls.classCode && (
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute right-3 top-10 w-44 bg-black
-                               border border-white/10 rounded-lg shadow-lg z-50"
-                  >
-                    <button
-                      onClick={() => {
-                        copyClassCode(cls.classCode);
-                        setOpenMenu(null);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-white/10"
-                    >
-                      Copy
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        deleteClassroom(cls.classCode);
-                        setOpenMenu(null);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm
-                                 text-red-400 hover:bg-red-500/10"
-                    >
-                       Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
