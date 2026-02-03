@@ -5,7 +5,7 @@ import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import ClassroomDetail from "./pages/teacher/ClassroomDetail";
 import Attendance from "./pages/teacher/Attendance";
-import Scan from "./pages/student/scan";
+import Scan from "./pages/student/Scan";
 import AttendanceHistory from "./pages/teacher/AttendanceHistory";
 import TeacherSessionStudents from "./pages/teacher/TeacherSessionStudents";
 
