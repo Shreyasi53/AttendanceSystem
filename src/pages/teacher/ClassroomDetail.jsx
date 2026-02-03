@@ -37,7 +37,8 @@ const ClassroomDetail = () => {
     const snap = await getDocs(studentsRef);
 
     const studentList = [];
-    snap.forEach((doc) => studentList.push(doc.data()));
+    snap.forEach((doc) => 
+      studentList.push({uid: doc.id, ...doc.data()}));
 
     // Sort by roll number (ascending)
     studentList.sort((a, b) => parseInt(a.rollNo) - parseInt(b.rollNo));
@@ -45,16 +46,20 @@ const ClassroomDetail = () => {
     setStudents(studentList);
   };
 
-  // Remove student from class
-  const removeStudent = (uid) => {
+ const removeStudent = (uid) => {
+  console.log("REMOVE CLICKED", uid);
+
   showConfirm("Remove this student?", async () => {
+    console.log("CONFIRM ACCEPTED");
+
     const ref = doc(db, "classrooms", classCode, "students", uid);
     await deleteDoc(ref);
+
+    console.log("DELETED");
     fetchStudents();
     showAlert("Student removed", "success");
   });
 };
-;
 
   // Check auth + fetch
   useEffect(() => {
