@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
-import { useAlert } from "../../context/AlertContext"; 
+import { useAlert } from "../../context/AlertContext";
 import {
   doc,
   setDoc,
@@ -10,49 +10,59 @@ import {
   collection,
   query,
   where,
+  deleteDoc,
 } from "firebase/firestore";
 
 const TeacherDashboard = () => {
   const { showAlert } = useAlert();
   const navigate = useNavigate();
+
   const [className, setClassName] = useState("");
   const [section, setSection] = useState("");
   const [subject, setSubject] = useState("");
   const [myClasses, setMyClasses] = useState([]);
+  const [openMenu, setOpenMenu] = useState(null);
 
-  const generateClassCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  const generateClassCode = () =>
+    Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  const copyClassCode = (code) => {
+    navigator.clipboard.writeText(code);
+    showAlert("Class code copied!", "success");
+  };
+
+  const deleteClassroom = async (code) => {
+    try {
+      await deleteDoc(doc(db, "classrooms", code));
+      showAlert("Classroom deleted", "success");
+      fetchMyClasses();
+    } catch {
+      showAlert("Failed to delete classroom", "error");
+    }
   };
 
   const handleCreateClass = async (e) => {
     e.preventDefault();
-
     const user = auth.currentUser;
     if (!user) return showAlert("Not logged in!", "error");
 
     const classCode = generateClassCode();
 
-    const classData = {
+    await setDoc(doc(db, "classrooms", classCode), {
       name: className,
-      section: section,
-      subject: subject,
-      classCode: classCode,
+      section,
+      subject,
+      classCode,
       teacherId: user.uid,
       createdAt: new Date(),
-    };
+    });
 
-    try {
-      await setDoc(doc(db, "classrooms", classCode), classData);
-      showAlert("Classroom Created!", "success");
-
-      fetchMyClasses();
-
-      setClassName("");
-      setSection("");
-      setSubject("");
-    } catch (error) {
-      showAlert("Error: " + error.message, "error"); 
-    }
+    showAlert("Classroom Created!", "success");
+    setClassName("");
+    setSection("");
+    setSubject("");
+    fetchMyClasses();
   };
 
   const fetchMyClasses = async () => {
@@ -63,91 +73,130 @@ const TeacherDashboard = () => {
       collection(db, "classrooms"),
       where("teacherId", "==", user.uid)
     );
-    const querySnapshot = await getDocs(q);
 
-    const classes = [];
-    querySnapshot.forEach((doc) => {
-      classes.push(doc.data());
-    });
-
-    setMyClasses(classes);
+    const snap = await getDocs(q);
+    const list = [];
+    snap.forEach((doc) => list.push(doc.data()));
+    setMyClasses(list);
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchMyClasses();
-      }
-    });
 
-    return () => unsubscribe();
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) fetchMyClasses();
+    });
+    return () => unsub();
   }, []);
 
-  return (
-    <div className="space-y-10">
-      <div className="rounded-2xl bg-card border border-white/10 p-6 space-y-5 shadow-sm">
-        <h2 className="text-xl font-medium">Create Classroom</h2>
+  useEffect(() => {
+    const close = () => setOpenMenu(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, []);
 
-        <form onSubmit={handleCreateClass} className="space-y-4">
+
+  return (
+    <div className="space-y-10 max-w-6xl mx-auto px-3 sm:px-6">
+
+      <div className="rounded-2xl bg-card border border-white/10 p-5 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-medium mb-4">
+          Create Classroom
+        </h2>
+
+        <form
+          onSubmit={handleCreateClass}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+        >
           <input
-            type="text"
             value={className}
             onChange={(e) => setClassName(e.target.value)}
             placeholder="Classroom Name"
-            className="w-full h-12 px-4 bg-input border border-white/10 rounded-lg placeholder:text-muted focus:border-primary outline-none"
+            className="h-12 px-4 bg-input border border-white/10 rounded-lg"
             required
           />
-
           <input
-            type="text"
             value={section}
             onChange={(e) => setSection(e.target.value)}
             placeholder="Section (e.g A)"
-            className="w-full h-12 px-4 bg-input border border-white/10 rounded-lg placeholder:text-muted focus:border-primary outline-none"
+            className="h-12 px-4 bg-input border border-white/10 rounded-lg"
             required
           />
-
           <input
-            type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Subject Name"
-            className="w-full h-12 px-4 bg-input border border-white/10 rounded-lg placeholder:text-muted focus:border-primary outline-none"
+            className="h-12 px-4 bg-input border border-white/10 rounded-lg"
             required
           />
 
-          <button
-            type="submit"
-            className="btn-primary w-full h-12 rounded-lg font-medium cursor-pointer"
-          >
-            Create
-          </button>
+          <div className="sm:col-span-3 flex justify-center">
+            <button className="btn-primary px-10 h-11 rounded-lg">
+              Create Classroom
+            </button>
+          </div>
         </form>
       </div>
 
-      
       <div className="space-y-4">
-        <h2 className="text-xl font-medium">My Classrooms</h2>
+        <h2 className="text-lg sm:text-xl font-medium">My Classrooms</h2>
 
         {myClasses.length === 0 ? (
-          <p className="text-muted">No classrooms created yet.</p>
+          <p className="text-muted text-sm">No classrooms created yet.</p>
         ) : (
-          <div className="space-y-3">
-            {myClasses.map((cls, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {myClasses.map((cls) => (
               <div
-                key={index}
+                key={cls.classCode}
                 onClick={() => navigate(`/teacher/class/${cls.classCode}`)}
-                className="rounded-xl bg-card border border-white/10 p-5 shadow-sm cursor-pointer hover:border-primary/40 hover:bg-card/90 transition"
-              >
-                <div className="flex justify-between items-center">
+                className="relative rounded-xl bg-card border border-white/10 p-4 cursor-pointer hover:border-primary/40 transition">
+
+                <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-medium">{cls.name}</h3>
-                    <p className="text-muted text-sm mt-1">{cls.subject}</p>
+                    <h3 className="font-medium">{cls.name}</h3>
+                    <p className="text-muted text-sm mt-1"> {cls.subject} </p>
                   </div>
-                  <span className="text-xs px-2 py-1 rounded bg-white/10">
-                    Code: {cls.classCode}
-                  </span>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenu(
+                        openMenu === cls.classCode ? null : cls.classCode
+                      );
+                    }}
+                    className="text-muted hover:text-white px-2"
+                  >
+                    ⋮
+                  </button>
                 </div>
+
+                {openMenu === cls.classCode && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-3 top-10 w-44 bg-black
+                               border border-white/10 rounded-lg shadow-lg z-50"
+                  >
+                    <button
+                      onClick={() => {
+                        copyClassCode(cls.classCode);
+                        setOpenMenu(null);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-white/10"
+                    >
+                      Copy
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        deleteClassroom(cls.classCode);
+                        setOpenMenu(null);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm
+                                 text-red-400 hover:bg-red-500/10"
+                    >
+                       Delete
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
