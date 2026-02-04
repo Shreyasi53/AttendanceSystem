@@ -1,34 +1,45 @@
 import { Outlet, useNavigate } from "react-router-dom";
-import { FiMenu } from "react-icons/fi";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { auth } from "../firebase/firebaseConfig";
-import { signOut } from "firebase/auth";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 
 const MENU = {
   teacher: [
     { name: "Home", path: "/teacher/dashboard" },
-    { name: "Settings", path: "/settings" },
-    { name: "Logout", action: "logout" }
+    { name: "Logout", action: "logout" },
   ],
   student: [
     { name: "Home", path: "/student/dashboard" },
-    { name: "Logout", action: "logout" }
-  ]
+    { name: "Logout", action: "logout" },
+  ],
 };
 
 const AppLayout = ({ role = "teacher" }) => {
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
-  const user = auth.currentUser;
 
-  const Avatar = ({ name }) => {
-    const letter = name?.charAt(0)?.toUpperCase() || "S";
-    return (
-      <div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white font-semibold cursor-pointer">
-        {letter}
-      </div>
-    );
-  };
+  // IMPORTANT: user must be in state
+  const [user, setUser] = useState(null);
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Listen to auth changes
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsub();
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const handleMenuClick = (item) => {
     if (item.action === "logout") {
@@ -36,53 +47,78 @@ const AppLayout = ({ role = "teacher" }) => {
     } else {
       navigate(item.path);
     }
-    setDrawerOpen(false);
+    setOpen(false);
+  };
+
+  // Avatar component
+  const Avatar = ({ name }) => {
+    const letter = name?.charAt(0)?.toUpperCase() || "U";
+    return (
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((prev) => !prev);
+        }}
+        className="w-9 h-9 rounded-full bg-purple-600
+                   flex items-center justify-center
+                   text-white font-semibold cursor-pointer select-none"
+      >
+        {letter}
+      </div>
+    );
   };
 
   return (
-  <div className="min-h-screen flex flex-col text-(--color-text)">
-    
-    {/* NAVBAR */}
-    <header className="w-full h-16 flex items-center justify-between px-4 border-b border-white/10">
-      <div className="flex items-center gap-4">
-        <FiMenu size={22} className="cursor-pointer" onClick={() => setDrawerOpen(true)} />
-        <h1 className="text-l font-semibold">
+    <div className="min-h-screen flex flex-col bg-black text-white">
+      {/* HEADER */}
+      <header className="h-16 flex items-center px-4 border-b border-white/10">
+        <div className="relative" ref={dropdownRef}>
+          <Avatar name={user?.displayName || "User"} />
+
+          {/* DROPDOWN */}
+          {open && (
+            <div
+              className="absolute left-0 mt-3 w-48
+                         bg-card border border-white/10
+                         rounded-xl shadow-xl z-50
+                         animate-fadeIn"
+            >
+              <div className="px-4 py-3 border-b border-white/10">
+                <p className="text-sm font-medium">
+                  {user?.displayName || "User"}
+                </p>
+                <p className="text-xs text-muted truncate">
+                  {user?.email}
+                </p>
+              </div>
+
+              <div className="py-2">
+                {MENU[role].map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleMenuClick(item)}
+                    className="w-full text-left px-4 py-2 text-sm
+                               hover:bg-white/10 transition"
+                  >
+                    {item.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <h1 className="ml-4 text-base font-semibold">
           {role === "teacher" ? "Teacher Portal" : "Student Portal"}
         </h1>
-      </div>
-      <Avatar name={user?.displayName || "User"} />
-    </header>
+      </header>
 
-    {/* OVERLAY */}
-    {drawerOpen && (
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setDrawerOpen(false)} />
-    )}
-
-    {/* DRAWER */}
-    <aside
-      className={`fixed top-0 left-0 h-full w-64 bg-card p-5 z-50 transform transition-transform duration-200 ${
-        drawerOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
-    >
-      <h2 className="text-lg font-semibold mb-4">Menu</h2>
-      <ul className="space-y-3">
-        {MENU[role].map((item, idx) => (
-          <li
-            key={idx}
-            className="cursor-pointer hover:text-(--color-primary) transition-colors"
-            onClick={() => handleMenuClick(item)}
-          >
-            {item.name}
-          </li>
-        ))}
-      </ul>
-    </aside>
-    <main className="flex-1 overflow-y-auto p-5">
-      <Outlet />
-    </main>
-  </div>
-);
-
+      {/* PAGE CONTENT */}
+      <main className="flex-1 overflow-y-auto p-5">
+        <Outlet />
+      </main>
+    </div>
+  );
 };
 
 export default AppLayout;

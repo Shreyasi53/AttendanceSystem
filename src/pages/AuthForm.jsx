@@ -1,17 +1,18 @@
 import React, { useState } from "react";
 import { auth, db } from "../firebase/firebaseConfig";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { Eye, EyeOff } from "lucide-react";
+import { useAlert } from "../context/AlertContext";
 import {
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  updateProfile,
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { Eye, EyeOff } from "lucide-react"; 
-import { useAlert } from "../context/AlertContext";
 
 const AuthForm = () => {
   const { showAlert } = useAlert();
   const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -39,21 +40,24 @@ const AuthForm = () => {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
-        formData.password
+        formData.password,
       );
 
       const user = userCredential.user;
+      await updateProfile(user, {
+        displayName: formData.name,
+      });
 
       await setDoc(doc(db, "users", user.uid), {
         name: formData.name,
         email: formData.email,
         role: formData.role,
-        uid: user.uid
+        uid: user.uid,
       });
 
       showAlert("Signup Successful!", "success");
+      await auth.currentUser.reload();
       setIsLogin(true);
-
     } catch (error) {
       showAlert(error.message, "error");
     }
@@ -66,7 +70,7 @@ const AuthForm = () => {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         formData.email,
-        formData.password
+        formData.password,
       );
 
       const user = userCredential.user;
@@ -79,7 +83,6 @@ const AuthForm = () => {
       } else {
         window.location.href = "/student/dashboard";
       }
-
     } catch (error) {
       showAlert(error.message);
     }
@@ -184,7 +187,6 @@ const AuthForm = () => {
             </p>
           </form>
         ) : (
-          
           <form className="space-y-5" onSubmit={handleSignupSubmit}>
             <div>
               <label className="text-sm text-muted mb-1 block">Name</label>

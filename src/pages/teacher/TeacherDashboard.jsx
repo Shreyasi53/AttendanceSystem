@@ -194,7 +194,7 @@ const TeacherDashboard = () => {
                         }}
                         className="w-full text-left px-4 py-2 text-sm hover:bg-white/10"
                       >
-                        📋 Copy class code
+                        Copy
                       </button>
 
                       <button
@@ -208,7 +208,7 @@ const TeacherDashboard = () => {
                   hover:bg-red-500/10
                 "
                       >
-                        🗑 Delete classroom
+                        Delete
                       </button>
                     </div>
                   )}

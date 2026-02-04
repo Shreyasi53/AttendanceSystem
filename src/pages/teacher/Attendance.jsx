@@ -46,7 +46,6 @@ const Attendance = () => {
       </div>
     )}
 
-    {/* Manual Attendance Component */}
     {mode === "manual" && (
       <ManualAttendance
         classCode={classCode}
@@ -54,7 +53,6 @@ const Attendance = () => {
       />
     )}
 
-    {/* QR Attendance Component */}
     {mode === "qr" && (
       <QrAttendance
         classCode={classCode}
