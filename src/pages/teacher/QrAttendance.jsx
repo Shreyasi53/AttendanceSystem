@@ -63,7 +63,6 @@ const QrAttendance = ({ classCode, onBack }) => {
     );
   };
 
-  // 🔥 Convert to PNG with quiet zone
   const generateQr = async (text) => {
     QRCode.toDataURL(
       text,
@@ -97,7 +96,6 @@ const QrAttendance = ({ classCode, onBack }) => {
 
     const pendingSnap = await getDocs(pendingRef);
 
-    // === IMPORTANT: WRITE SESSION METADATA ===
     const historySessionRef = doc(
       db,
       "attendance",
@@ -150,7 +148,8 @@ const QrAttendance = ({ classCode, onBack }) => {
   }, []);
 
   return (
-    <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center space-y-4 shadow">
+    <div className="flex justify-center ">
+    <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center space-y-4 shadow w-full max-w-md lg:max-w-lg">
       <h2 className="text-xl font-semibold">QR Mode Active</h2>
 
       {qrActive && (
@@ -185,6 +184,7 @@ const QrAttendance = ({ classCode, onBack }) => {
       {!qrActive && sessionId && (
         <p className="text-red-400 font-medium">QR Attendance Ended!</p>
       )}
+    </div>
     </div>
   );
 };

@@ -46,4 +46,25 @@ body {
 .btn-primary:hover {
   filter: brightness(0.7);
 }
+/* Hide scrollbar but allow scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE, Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.mask-fade-bottom {
+  mask-image: linear-gradient(
+    to bottom,
+    black 95%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 95%,
+    transparent 100%
+  );
+}
 

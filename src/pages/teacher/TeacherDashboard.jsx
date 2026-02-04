@@ -134,30 +134,17 @@ const TeacherDashboard = () => {
         </div>
 
         <div className="lg:col-span-2 flex flex-col space-y-4">
-          <h2 className="text-lg sm:text-xl font-medium">My Classrooms</h2>
+          <h2 className="text-lg sm:text-l font-medium">My Classrooms</h2>
 
           {myClasses.length === 0 ? (
             <p className="text-muted text-sm">No classrooms created yet.</p>
           ) : (
-            <div
-              className="
-        flex flex-col gap-4
-        max-h-[520px]
-        overflow-y-auto
-        pr-2
-      "
-            >
+            <div className=" relative flex flex-col gap-4 max-h-[540px]  overflow-y-auto no-scrollbar mask-fade-bottom">
               {myClasses.map((cls) => (
                 <div
                   key={cls.classCode}
                   onClick={() => navigate(`/teacher/class/${cls.classCode}`)}
-                  className="
-            relative rounded-xl bg-card
-            border border-white/10
-            p-4 cursor-pointer
-            hover:border-primary/40
-            transition
-          "
+                  className="relative rounded-xl bg-card border border-white/10 p-4 cursor-pointer hover:border-primary/40 transition"
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -181,11 +168,7 @@ const TeacherDashboard = () => {
                   {openMenu === cls.classCode && (
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="
-                absolute right-3 top-10 w-44
-                bg-black border border-white/10
-                rounded-lg shadow-lg z-50
-              "
+                      className="absolute right-3 top-10 w-44 bg-black border border-white/10 rounded-lg shadow-lg z-50"
                     >
                       <button
                         onClick={() => {
@@ -202,11 +185,7 @@ const TeacherDashboard = () => {
                           deleteClassroom(cls.classCode);
                           setOpenMenu(null);
                         }}
-                        className="
-                  w-full text-left px-4 py-2
-                  text-sm text-red-400
-                  hover:bg-red-500/10
-                "
+                        className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
                       >
                         Delete
                       </button>

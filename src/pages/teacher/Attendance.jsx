@@ -13,19 +13,20 @@ const Attendance = () => {
 
     <button
       onClick={() => navigate(-1)}
-      className="text-primary hover:underline flex items-center gap-1"
+      className="text-primary flex items-center gap-1 mt-4 ml-3 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
     >
       ← Back
     </button>
 
     <div>
-      <h1 className="text-2xl font-semibold">Take Attendance</h1>
-      <p className="text-muted mt-1">Class Code: {classCode}</p>
+      <h1 className="text-2xl text-center font-semibold">Take Attendance</h1>
+      <p className="text-muted text-center mt-1">Class Code: {classCode}</p>
     </div>
 
     {mode === "" && (
-      <div className="bg-card border border-white/10 rounded-2xl p-6 space-y-4 shadow-sm">
-        <h2 className="text-xl font-medium">Choose Mode</h2>
+      <div className="flex justify-center">
+      <div className="bg-card border border-white/10 rounded-2xl p-6 space-y-4 shadow-sm w-full max-w-md lg:max-w-lg">
+        <h2 className="text-xl text-center font-medium">Choose Mode</h2>
 
         <div className="flex gap-3">
 
@@ -44,6 +45,7 @@ const Attendance = () => {
           </button>
         </div>
       </div>
+      </div>
     )}
 
     {mode === "manual" && (
@@ -61,6 +63,7 @@ const Attendance = () => {
     )}
 
   </div>
+  
 );
 
 };

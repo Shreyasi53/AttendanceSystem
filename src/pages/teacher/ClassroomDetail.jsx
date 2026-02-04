@@ -83,73 +83,97 @@ const ClassroomDetail = () => {
     );
   }
 
-  return (
-  <div className="space-y-10 space-x-1">
-    <div className="bg-card border border-white/10 rounded-2xl p-6 space-y-2 shadow">
-      <p>
-        <span className="font-semibold">Class:</span> {classInfo.name} ({classInfo.section})
-      </p>
-      <p>
-        <span className="font-semibold">Subject:</span> {classInfo.subject}
-      </p>
-      <p>
-        <span className="font-semibold">Class Code:</span> {classCode}
-      </p>
-      <p>
-        <span className="font-semibold">Total Students:</span> {students.length}
-      </p>
-    </div>
+ return (
+  <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
 
-   
-    <div className="flex gap-3">
-      <button
-        onClick={() => navigate(`/teacher/class/${classCode}/attendance`)}
-        className="btn-primary px-4 py-2 rounded-lg font-medium hover:brightness-90"
-      >
-        Take Attendance
-      </button>
+      {/* LEFT SIDE */}
+      <div className="lg:col-span-1 space-y-6">
 
-      <button
-        onClick={() => navigate(`/teacher/class/${classCode}/history`)}
-        className="bg-input px-4 py-2 rounded-lg text-white hover:brightness-90 border border-white/10"
-      >
-        View Attendance
-      </button>
-    </div>
+        {/* Class Details */}
+        <div className="bg-card border border-white/10 rounded-2xl p-6 space-y-2">
+          <p>
+            <span className="font-semibold">Class:</span>{" "}
+            {classInfo.name} ({classInfo.section})
+          </p>
+          <p>
+            <span className="font-semibold">Subject:</span>{" "}
+            {classInfo.subject}
+          </p>
+          <p>
+            <span className="font-semibold">Class Code:</span>{" "}
+            {classCode}
+          </p>
+          <p>
+            <span className="font-semibold">Total Students:</span>{" "}
+            {students.length}
+          </p>
+        </div>
 
-    {/* Students List */}
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Students List</h2>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={() =>
+              navigate(`/teacher/class/${classCode}/attendance`)
+            }
+            className="btn-primary h-11 px-5 rounded-lg"
+          >
+            Take Attendance
+          </button>
 
-      {students.length === 0 ? (
-        <p className="text-muted">No students have joined yet.</p>
-      ) : (
-        <div className="space-y-3">
-          {students.map((std, index) => (
-            <div
-              key={index}
-              className="bg-card border border-white/10 rounded-xl p-4 flex justify-between items-center shadow-sm"
-            >
-              <div>
-                <p className="font-medium">
+          <button
+            onClick={() =>
+              navigate(`/teacher/class/${classCode}/history`)
+            }
+            className="h-11 px-5 rounded-lg border border-white/10 hover:bg-white/5 transition"
+          >
+            View Attendance
+          </button>
+        </div>
+
+      </div>
+
+      {/* RIGHT SIDE */}
+      <div className="lg:col-span-2 flex flex-col space-y-4">
+
+        <h2 className="text-xl font-semibold">Students List</h2>
+
+        {students.length === 0 ? (
+          <p className="text-muted">No students have joined yet.</p>
+        ) : (
+          <div
+            className="
+              relative flex flex-col gap-3
+              max-h-[520px]
+              overflow-y-auto
+              no-scrollbar
+              mask-fade-bottom
+              pb-6
+            "
+          >
+            {students.map((std) => (
+              <div
+                key={std.uid}
+                className="bg-card border border-white/10 rounded-xl p-4 flex justify-between items-center"
+              >
+                <p className="font-medium text-sm">
                   {std.rollNo} • {std.studentName}
                 </p>
+
+                <button
+                  className="text-red-400 hover:text-red-500 text-sm"
+                  onClick={() => removeStudent(std.uid)}
+                >
+                  Remove
+                </button>
               </div>
-              <button
-                className="text-red-400 hover:underline"
-                onClick={() => removeStudent(std.uid)}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+
+      </div>
     </div>
-
   </div>
-);
-
-};
+)};
 
 export default ClassroomDetail;
