@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../../firebase/firebaseConfig";
 import {
   collection,
@@ -9,7 +10,9 @@ import {
 } from "firebase/firestore";
 import { useAlert } from "../../context/AlertContext";
 
-const ManualAttendance = ({ classCode, onBack }) => {
+const ManualAttendance = () => {
+  const navigate = useNavigate();
+  const { classCode } = useParams();
   const { showAlert } = useAlert();
   const [students, setStudents] = useState([]);
   const [selected, setSelected] = useState({});
@@ -80,7 +83,7 @@ const ManualAttendance = ({ classCode, onBack }) => {
       </button>
       
       <button
-        onClick={onBack}
+        onClick={()=> navigate(-1)}
         className="mt-4 ml-3 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
       >
         Back

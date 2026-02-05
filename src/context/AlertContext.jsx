@@ -1,5 +1,4 @@
 import { createContext, useContext, useState } from "react";
-import Alert from "../components/Alert";
 
 const AlertContext = createContext();
 
@@ -10,23 +9,22 @@ export const AlertProvider = ({ children }) => {
     open: false,
   });
 
-  const [confirm, setConfirm] = useState(null); // ✅ FIX 1
+  const [confirm, setConfirm] = useState(null);
 
   const showAlert = (message, type = "success") => {
-    setAlert({
-      message,
-      type,
-      open: true,
-    });
+    setAlert({ message, type, open: true });
+
+    setTimeout(() => {
+      setAlert((prev) => ({ ...prev, open: false }));
+    }, 2500);
   };
 
   const closeAlert = () => {
     setAlert((prev) => ({ ...prev, open: false }));
   };
 
-  // ✅ CONFIRM LOGIC
-  const showConfirm = (message, onConfirm) => {
-    setConfirm({ message, onConfirm });
+  const showConfirm = (message, onConfirm, confirmText = "Confirm") => {
+    setConfirm({ message, onConfirm, confirmText });
   };
 
   const handleConfirm = async () => {
@@ -42,19 +40,36 @@ export const AlertProvider = ({ children }) => {
     <AlertContext.Provider value={{ showAlert, showConfirm }}>
       {children}
 
-      {/* Normal alert */}
-      <Alert
-        open={alert.open}
-        message={alert.message}
-        type={alert.type}
-        onClose={closeAlert}
-      />
+      {/* Toast Alert */}
+      {alert.open && (
+        <div className="fixed top-6 right-6 z-[999] animate-slideIn">
+          <div
+            className={`
+              px-5 py-3 rounded-xl shadow-lg border flex items-start gap-3
+              bg-black/70 backdrop-blur-md text-white min-w-[260px]
+              ${alert.type === "success" ? "border-green-500/40" : ""}
+              ${alert.type === "error" ? "border-red-500/40" : ""}
+              ${alert.type === "info" ? "border-blue-500/40" : ""}
+            `}
+          >
+            <p className="text-sm flex-1">{alert.message}</p>
 
-      {/* Confirm modal */}
+            <button
+              onClick={closeAlert}
+              className="text-white/60 hover:text-white text-lg leading-none"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
       {confirm && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-card p-6 rounded-xl space-y-4 w-80">
             <p className="text-white">{confirm.message}</p>
+
             <div className="flex justify-end gap-3">
               <button
                 className="px-4 py-1 border rounded"
@@ -62,11 +77,12 @@ export const AlertProvider = ({ children }) => {
               >
                 Cancel
               </button>
+
               <button
                 className="px-4 py-1 bg-red-500 text-white rounded"
                 onClick={handleConfirm}
               >
-                Remove
+                {confirm.confirmText}
               </button>
             </div>
           </div>

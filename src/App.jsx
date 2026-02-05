@@ -4,7 +4,8 @@ import AppLayout from "./layouts/AppLayout";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import ClassroomDetail from "./pages/teacher/ClassroomDetail";
-import Attendance from "./pages/teacher/Attendance";
+import ManualAttendance from "./pages/teacher/ManualAttendance";
+import QrAttendance from "./pages/teacher/QrAttendance";
 import Scan from "./pages/student/Scan";
 import AttendanceHistory from "./pages/teacher/AttendanceHistory";
 import TeacherSessionStudents from "./pages/teacher/TeacherSessionStudents";
@@ -21,7 +22,9 @@ function App() {
           <Route path="/teacher" element={<AppLayout role="teacher" />}>
             <Route path="dashboard" element={<TeacherDashboard />} />
             <Route path="class/:classCode" element={<ClassroomDetail />} />
-            <Route path="class/:classCode/attendance" element={<Attendance />} />
+
+            <Route path="class/:classCode/manual" element={<ManualAttendance />} />
+            <Route path="class/:classCode/attendance" element={<QrAttendance />} />
             <Route
               path="class/:classCode/history"
               element={<AttendanceHistory />}

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAlert } from "../../context/AlertContext";
 import QRCode from "qrcode"; // <-- use qrcode NOT react-qr-code
 import { db } from "../../firebase/firebaseConfig";
 import {
@@ -11,10 +13,13 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 
-const QrAttendance = ({ classCode, onBack }) => {
+const QrAttendance = () => {
+  const { classCode } = useParams();
   const [qrActive, setQrActive] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [qrUrl, setQrUrl] = useState(null); // <-- store PNG qr
+  const { showConfirm } = useAlert();
+  const navigate = useNavigate();
 
   const generateSessionId = () =>
     "SESSION_" + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -106,14 +111,13 @@ const QrAttendance = ({ classCode, onBack }) => {
 
     // update class session metadata
     await setDoc(
-  doc(db, "attendance", classCode, "sessions", sessionId),
-  {
-    sessionId,
-    endedAt: serverTimestamp()
-  },
-  { merge: true }
-);
-
+      doc(db, "attendance", classCode, "sessions", sessionId),
+      {
+        sessionId,
+        endedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
 
     const studentsColRef = collection(historySessionRef, "students");
 
@@ -129,7 +133,6 @@ const QrAttendance = ({ classCode, onBack }) => {
       });
     }
 
-    // Cleanup pending
     for (const p of pendingSnap.docs) {
       await deleteDoc(doc(pendingRef, p.id));
     }
@@ -148,43 +151,57 @@ const QrAttendance = ({ classCode, onBack }) => {
   }, []);
 
   return (
-    <div className="flex justify-center ">
-    <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center space-y-4 shadow w-full max-w-md lg:max-w-lg">
-      <h2 className="text-xl font-semibold">QR Mode Active</h2>
+    <div className="flex justify-center mt-15">
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-24 left-15 z-50 text-primary flex items-center gap-1 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
+      >
+        ← Back
+      </button>
 
-      {qrActive && (
-        <div className="flex flex-col items-center space-y-4">
-          {/* 🔥 Render PNG QR instead of SVG */}
-          {qrUrl && (
-            <img
-              src={qrUrl}
-              alt="qr"
-              style={{
-                width: 200,
-                background: "white",
-                padding: 10,
-                borderRadius: 10,
-              }}
-            />
-          )}
+      <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center space-y-4 shadow w-full max-w-md lg:max-w-lg">
+        <h2 className="text-xl font-semibold">QR Mode Active</h2>
 
-          <p className="text-muted text-sm">
-            Session: <span className="text-white font-medium">{sessionId}</span>
-          </p>
+        {qrActive && (
+          <div className="flex flex-col items-center space-y-4">
+            {/* Render PNG QR instead of SVG */}
+            {qrUrl && (
+              <img
+                src={qrUrl}
+                alt="qr"
+                style={{
+                  width: 200,
+                  background: "white",
+                  padding: 10,
+                  borderRadius: 10,
+                }}
+              />
+            )}
 
-          <button
-            onClick={stopQrSession}
-            className="px-4 py-2 rounded-lg font-medium text-white bg-purple-600 hover:brightness-90"
-          >
-            Stop Attendance
-          </button>
-        </div>
-      )}
+            <p className="text-muted text-sm">
+              Session:{" "}
+              <span className="text-white font-medium">{sessionId}</span>
+            </p>
 
-      {!qrActive && sessionId && (
-        <p className="text-red-400 font-medium">QR Attendance Ended!</p>
-      )}
-    </div>
+            <button
+              onClick={() =>
+                showConfirm(
+                  "Are you sure you want to stop attendance?",
+                  () => stopQrSession(),
+                  "Stop",
+                )
+              }
+              className="px-4 py-2 rounded-lg font-medium text-white bg-purple-600 hover:brightness-90"
+            >
+              Stop Attendance
+            </button>
+          </div>
+        )}
+
+        {!qrActive && sessionId && (
+          <p className="text-red-400 font-medium">QR Attendance Ended!</p>
+        )}
+      </div>
     </div>
   );
 };
