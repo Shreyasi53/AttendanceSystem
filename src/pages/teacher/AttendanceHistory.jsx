@@ -32,11 +32,11 @@ export default function AttendanceHistory() {
 
   return (
     <div className="p-4 text-white">
-      <button onClick={() => navigate(-1)} className="underline mb-3">
+      <button onClick={() => navigate(-1)} className=" px-2 py-1 border border-white/20 bg-gray-600 rounded-lg hover:bg-gray-700">
         ← Back
       </button>
 
-      <h1 className="text-xl font-semibold mb-4">Attendance Sessions</h1>
+      <h1 className="text-xl text-center font-semibold mb-4">Attendance Sessions</h1>
 
       {sessions.length === 0 && <p>No attendance records found.</p>}
 

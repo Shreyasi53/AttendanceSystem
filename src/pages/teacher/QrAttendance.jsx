@@ -154,7 +154,7 @@ const QrAttendance = () => {
     <div className="flex justify-center mt-15">
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-24 left-15 z-50 text-primary flex items-center gap-1 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
+        className="fixed top-24 left-15 text-primary flex items-center gap-1 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
       >
         ← Back
       </button>

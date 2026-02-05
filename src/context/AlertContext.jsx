@@ -42,7 +42,7 @@ export const AlertProvider = ({ children }) => {
 
       {/* Toast Alert */}
       {alert.open && (
-        <div className="fixed top-6 right-6 z-[999] animate-slideIn">
+        <div className="fixed top-6 right-6 z-999 animate-slideIn">
           <div
             className={`
               px-5 py-3 rounded-xl shadow-lg border flex items-start gap-3
