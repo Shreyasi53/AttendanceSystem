@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase/firebaseConfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { Eye, EyeOff } from "lucide-react";
@@ -11,6 +12,7 @@ import {
 
 const AuthForm = () => {
   const { showAlert } = useAlert();
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -64,29 +66,35 @@ const AuthForm = () => {
   };
 
   const handleLoginSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password,
-      );
+  try {
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      formData.email,
+      formData.password
+    );
 
-      const user = userCredential.user;
+    const user = userCredential.user;
 
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      const userData = userDoc.data();
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const userData = userDoc.data();
 
+    showAlert("Login Successful!", "success");
+
+    setTimeout(() => {
       if (userData.role === "teacher") {
-        window.location.href = "/teacher/dashboard";
+        navigate("/teacher/dashboard");
       } else {
-        window.location.href = "/student/dashboard";
+        navigate("/student/dashboard");
       }
-    } catch (error) {
-      showAlert(error.message);
-    }
-  };
+    }, 800); // small delay so toast is visible
+
+  } catch (error) {
+    showAlert(error.message, "error");
+  }
+};
+
 
   return (
     <div

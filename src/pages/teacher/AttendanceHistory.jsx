@@ -17,7 +17,7 @@ export default function AttendanceHistory() {
       snap.forEach((d) => {
         result.push({
           sessionId: d.id,
-          ...d.data()
+          ...d.data(),
         });
       });
 
@@ -31,27 +31,35 @@ export default function AttendanceHistory() {
   }, []);
 
   return (
-    <div className="p-4 text-white">
-      <button onClick={() => navigate(-1)} className=" px-2 py-1 border border-white/20 bg-gray-600 rounded-lg hover:bg-gray-700">
+    <div className="p-4">
+      <button
+        onClick={() => navigate(-1)}
+        className="px-4 py-2 rounded-lg bg-card border-theme hover:brightness-90 transition"
+      >
         ← Back
       </button>
 
-      <h1 className="text-xl text-center font-semibold mb-4">Attendance Sessions</h1>
+      <h1 className="text-xl text-center font-semibold mt-4 mb-6">
+        Attendance Sessions
+      </h1>
 
-      {sessions.length === 0 && <p>No attendance records found.</p>}
+      {sessions.length === 0 && (
+        <p className="text-muted text-center">No attendance records found.</p>
+      )}
 
       <div className="space-y-3">
         {sessions.map((s, i) => (
           <div
             key={i}
-            className="border border-white/10 rounded-lg p-4 bg-card cursor-pointer"
+            className="bg-card border border-white/10 rounded-xl p-4 cursor-pointer hover:border-primary/40 transition"
             onClick={() =>
               navigate(`/teacher/class/${classCode}/history/${s.sessionId}`)
             }
           >
             <p className="font-semibold">{s.sessionId}</p>
+
             {s.endedAt && (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted mt-1">
                 {new Date(s.endedAt.seconds * 1000).toLocaleString()}
               </p>
             )}

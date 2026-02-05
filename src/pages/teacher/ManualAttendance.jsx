@@ -84,7 +84,8 @@ const ManualAttendance = () => {
       
       <button
         onClick={()=> navigate(-1)}
-        className="mt-4 ml-3 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
+        className="mt-4 ml-3 px-4 py-2 rounded-lg border border-white/10 bg-input hover:brightness-90 transition"
+
       >
         Back
       </button>

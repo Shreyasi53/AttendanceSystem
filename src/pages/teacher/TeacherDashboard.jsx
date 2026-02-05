@@ -14,7 +14,7 @@ import {
 } from "firebase/firestore";
 
 const TeacherDashboard = () => {
-  const { showAlert } = useAlert();
+  const { showAlert, showConfirm } = useAlert();
   const navigate = useNavigate();
 
   const [className, setClassName] = useState("");
@@ -34,7 +34,7 @@ const TeacherDashboard = () => {
   const deleteClassroom = async (code) => {
     try {
       await deleteDoc(doc(db, "classrooms", code));
-      showAlert("Classroom deleted", "success");
+      showAlert("Classroom Deleted!", "success");
       fetchMyClasses();
     } catch {
       showAlert("Failed to delete classroom", "error");
@@ -182,7 +182,13 @@ const TeacherDashboard = () => {
 
                       <button
                         onClick={() => {
-                          deleteClassroom(cls.classCode);
+                          showConfirm(
+                            "Are you sure you want to delete this classroom?",
+                            async () => {
+                              await deleteClassroom(cls.classCode);
+                            },
+                            "Delete",
+                          );
                           setOpenMenu(null);
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"

@@ -15,6 +15,7 @@ const ClassroomDetail = () => {
   const { classCode } = useParams();
   const navigate = useNavigate();
   const { showAlert, showConfirm } = useAlert();
+
   const [classInfo, setClassInfo] = useState(null);
   const [students, setStudents] = useState([]);
   const [showAttendancePopup, setShowAttendancePopup] = useState(false);
@@ -25,7 +26,7 @@ const ClassroomDetail = () => {
     const classSnap = await getDoc(classRef);
 
     if (!classSnap.exists()) {
-      showAlert("Classroom not found!");
+      showAlert("Classroom not found!", "error");
       return;
     }
 
@@ -46,13 +47,19 @@ const ClassroomDetail = () => {
     setStudents(studentList);
   };
 
+  // Remove student
   const removeStudent = (uid) => {
-      showConfirm("Are you sure you want to remove this student?", async()=>{
+    showConfirm(
+      "Are you sure you want to remove this student?",
+      async () => {
         const ref = doc(db, "classrooms", classCode, "students", uid);
         await deleteDoc(ref);
+
         fetchStudents();
-        showAlert("Student removed from class.");
-      }, "Remove")
+        showAlert("Student removed from class.", "success");
+      },
+      "Remove"
+    );
   };
 
   // Check auth + fetch
@@ -69,9 +76,13 @@ const ClassroomDetail = () => {
     return () => unsub();
   }, []);
 
+  // Loading UI
   if (!classInfo) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--color-bg)", color: "var(--color-text)" }}
+      >
         <p>Loading classroom...</p>
       </div>
     );
@@ -80,21 +91,25 @@ const ClassroomDetail = () => {
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
         {/* LEFT SIDE */}
         <div className="lg:col-span-1 space-y-6">
+
           {/* Class Details */}
-          <div className="bg-card border border-white/10 rounded-2xl p-6 space-y-2">
+          <div className="bg-card border-theme rounded-2xl p-6 space-y-2 shadow-sm">
             <p>
               <span className="font-semibold">Class:</span> {classInfo.name} (
               {classInfo.section})
             </p>
+
             <p>
-              <span className="font-semibold">Subject:</span>{" "}
-              {classInfo.subject}
+              <span className="font-semibold">Subject:</span> {classInfo.subject}
             </p>
+
             <p>
               <span className="font-semibold">Class Code:</span> {classCode}
             </p>
+
             <p>
               <span className="font-semibold">Total Students:</span>{" "}
               {students.length}
@@ -112,7 +127,7 @@ const ClassroomDetail = () => {
 
             <button
               onClick={() => navigate(`/teacher/class/${classCode}/history`)}
-              className="h-11 px-5 rounded-lg border border-white/10 hover:bg-white/5 transition"
+              className="h-11 px-5 rounded-lg bg-card border-theme hover:opacity-80 transition"
             >
               View Attendance
             </button>
@@ -130,14 +145,14 @@ const ClassroomDetail = () => {
               {students.map((std) => (
                 <div
                   key={std.uid}
-                  className="bg-card border border-white/10 rounded-xl p-4 flex justify-between items-center"
+                  className="bg-card border-theme rounded-xl p-4 flex justify-between items-center"
                 >
                   <p className="font-medium text-sm">
                     {std.rollNo} • {std.studentName}
                   </p>
 
                   <button
-                    className="text-red-400 hover:text-red-500 text-sm"
+                    className="text-red-500 hover:opacity-70 text-sm transition"
                     onClick={() => removeStudent(std.uid)}
                   >
                     Remove
@@ -152,12 +167,12 @@ const ClassroomDetail = () => {
       {/* POPUP MODAL */}
       {showAttendancePopup && (
         <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4"
+          className="fixed inset-0 modal-overlay flex items-center justify-center z-50 px-4"
           onClick={() => setShowAttendancePopup(false)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-card border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-lg space-y-4"
+            className="bg-card border-theme rounded-2xl p-6 w-full max-w-sm shadow-lg space-y-4"
           >
             <h2 className="text-lg font-semibold text-center">
               Choose Attendance Mode
@@ -169,7 +184,7 @@ const ClassroomDetail = () => {
                   setShowAttendancePopup(false);
                   navigate(`/teacher/class/${classCode}/manual`);
                 }}
-                className="bg-input border border-white/10 text-white px-4 py-2 rounded-lg hover:brightness-90"
+                className="bg-input border-theme px-4 py-2 rounded-lg hover:opacity-80 transition"
               >
                 Manual Attendance
               </button>
@@ -179,7 +194,7 @@ const ClassroomDetail = () => {
                   setShowAttendancePopup(false);
                   navigate(`/teacher/class/${classCode}/attendance`);
                 }}
-                className="btn-primary px-4 py-2 rounded-lg font-medium hover:brightness-90"
+                className="btn-primary px-4 py-2 rounded-lg font-medium hover:opacity-80 transition"
               >
                 QR Attendance
               </button>
@@ -187,7 +202,7 @@ const ClassroomDetail = () => {
 
             <button
               onClick={() => setShowAttendancePopup(false)}
-              className="w-full text-sm text-muted hover:text-white transition"
+              className="w-full text-sm text-muted hover:opacity-70 transition"
             >
               Cancel
             </button>

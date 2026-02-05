@@ -12,19 +12,26 @@
   --color-text: #E0E0E0;     
   --color-text-muted: #9E9E9E;
   --color-primary: #8B5CF6;  
-  --color-success: #22C55E;  
+  --color-success: #22C55E; 
+  --color-border: rgba(255, 255, 255, 0.08);
+ 
 }
 
 /* Light Theme */
 [data-theme="light"] {
-  --color-bg: #f5f6f7;
-  --color-bg-card: #ffffff;
-  --color-bg-input: #eef0f3;
-  --color-text: #1b1b1b;
-  --color-text-muted: #525252;
-  --color-primary: #5d5dff;
-  --color-success: #16a34a;
+  --color-bg: #f3f4f6;          /* soft gray background */
+  --color-bg-card: #ffffff;     /* clean white card */
+  --color-bg-input: #f9fafb;    /* light input bg */
+
+  --color-text: #111827;        /* deep dark text */
+  --color-text-muted: #6b7280;  /* muted gray text */
+
+  --color-primary: #6d28d9;     /* premium purple */
+  --color-success: #16a34a;     /* green */
+
+  --color-border: rgba(0, 0, 0, 0.08); /* soft border */
 }
+
 
 /* Apply Theme */
 body {
@@ -68,17 +75,3 @@ body {
   );
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateX(40px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0px);
-    opacity: 1;
-  }
-}
-
-.animate-slideIn {
-  animation: slideIn 0.25s ease-out;
-}
