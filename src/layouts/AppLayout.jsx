@@ -125,7 +125,7 @@ const AppLayout = ({ role = "teacher" }) => {
                   <button
                     key={idx}
                     onClick={() => handleMenuClick(item)}
-                    className="w-full flex items-center gap-2 text-left px-4 py-2 text-sm hover:bg-white/10 transition"
+                    className="w-full flex items-center gap-2 text-left px-4 py-2 text-sm hover:bg-white/10 transition cursor-pointer"
                   >
                     {item.icon === "home" && <Home size={16} />}
                     {item.icon === "logout" && <LogOut size={16} />}

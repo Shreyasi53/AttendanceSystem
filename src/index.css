@@ -24,13 +24,10 @@
   --color-bg-card: #ffffff;     /* clean white card */
   --color-bg-manual: #ffffff;       /* its for the classroom copy delete  */
   --color-bg-input: #f9fafb;    /* light input bg */
-
   --color-text: #111827;        /* deep dark text */
   --color-text-muted: #6b7280;  /* muted gray text */
-
   --color-primary: #6d28d9;     /* premium purple */
   --color-success: #16a34a;     /* green */
-
   --color-border: rgba(0, 0, 0, 0.14); /* soft border */
 }
 

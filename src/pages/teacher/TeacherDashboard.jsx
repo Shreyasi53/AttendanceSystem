@@ -128,7 +128,7 @@ const TeacherDashboard = () => {
                 required
               />
 
-              <button className="btn-primary w-full h-11 rounded-lg font-medium">
+              <button className="btn-primary w-full h-11 rounded-lg font-medium cursor-pointer">
                 Create Classroom
               </button>
             </form>

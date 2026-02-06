@@ -59,7 +59,7 @@ export const AlertProvider = ({ children }) => {
 
             <button
               onClick={closeAlert}
-              className="text-white/60 hover:text-white text-lg leading-none"
+              className="text-white/60 hover:text-white text-lg leading-none cursor-pointer"
             >
               ✕
             </button>
@@ -80,7 +80,7 @@ export const AlertProvider = ({ children }) => {
 
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 bg-gray-400 border-theme rounded-lg hover:bg-input transition"
+                className="px-4 py-2 bg-input border-theme cursor-pointer rounded-lg hover:brightness-90 transition"
                 style={{ color: "var(--color-text)" }}
                 onClick={handleCancel}
               >
@@ -88,7 +88,7 @@ export const AlertProvider = ({ children }) => {
               </button>
 
               <button
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:brightness-90 transition"
+                className="px-4 py-2 bg-red-500 text-white cursor-pointer rounded-lg hover:brightness-90 transition"
                 onClick={handleConfirm}
               >
                 {confirm.confirmText}

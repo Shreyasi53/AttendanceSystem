@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
@@ -35,8 +36,9 @@ export default function TeacherSessionStudents() {
 
   return (
     <div className="p-4 text-white">
-      <button onClick={() => navigate(-1)} className="underline mb-3">
-        ← Back
+      <button onClick={() => navigate(-1)} className="mb-4 border-theme text-primary flex items-center gap-1 px-4 py-2 bg-input rounded-lg hover:brightness-90 transition cursor-pointer">
+          <ArrowLeft size={16} />
+          <span>Back</span>
       </button>
 
       <h1 className="text-xl font-semibold mb-4">

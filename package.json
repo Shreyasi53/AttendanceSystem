@@ -13,6 +13,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
+    "file-saver": "^2.0.5",
     "firebase": "^12.8.0",
     "html5-qrcode": "^2.3.8",
     "jsqr": "^1.4.0",
@@ -25,7 +26,8 @@
     "react-qr-code": "^2.0.18",
     "react-router-dom": "^7.12.0",
     "react-webcam": "^7.2.0",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

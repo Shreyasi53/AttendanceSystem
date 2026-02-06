@@ -120,14 +120,14 @@ const ClassroomDetail = () => {
           <div className="flex gap-3">
             <button
               onClick={() => setShowAttendancePopup(true)}
-              className="btn-primary h-11 px-5 rounded-lg"
+              className="btn-primary h-11 px-5 rounded-lg cursor-pointer"
             >
               Take Attendance
             </button>
 
             <button
               onClick={() => navigate(`/teacher/class/${classCode}/history`)}
-              className="h-11 px-5 rounded-lg bg-card border-theme hover:opacity-80 transition"
+              className="h-11 px-5 rounded-lg bg-card border-theme hover:opacity-80 transition cursor-pointer"
             >
               View Attendance
             </button>
@@ -152,7 +152,7 @@ const ClassroomDetail = () => {
                   </p>
 
                   <button
-                    className="text-red-500 hover:opacity-70 text-sm transition"
+                    className="text-red-500 hover:opacity-70 text-sm transition cursor-pointer"
                     onClick={() => removeStudent(std.uid)}
                   >
                     Remove
@@ -184,7 +184,7 @@ const ClassroomDetail = () => {
                   setShowAttendancePopup(false);
                   navigate(`/teacher/class/${classCode}/manual`);
                 }}
-                className="bg-input border-theme px-4 py-2 rounded-lg hover:opacity-80 transition"
+                className="bg-input border-theme px-4 py-2 rounded-lg hover:opacity-80 transition cursor-pointer"
               >
                 Manual Attendance
               </button>
@@ -194,7 +194,7 @@ const ClassroomDetail = () => {
                   setShowAttendancePopup(false);
                   navigate(`/teacher/class/${classCode}/attendance`);
                 }}
-                className="btn-primary px-4 py-2 rounded-lg font-medium hover:brightness-90 transition"
+                className="btn-primary px-4 py-2 rounded-lg font-medium hover:brightness-90 transition cursor-pointer"
               >
                 QR Attendance
               </button>
@@ -202,7 +202,7 @@ const ClassroomDetail = () => {
 
             <button
               onClick={() => setShowAttendancePopup(false)}
-              className="px-4 py-2 rounded-lg w-full bg-input border-theme text-sm text-muted hover:opacity-70 transition"
+              className="px-4 py-2 rounded-lg w-full bg-input border-theme text-sm text-muted hover:opacity-70 transition cursor-pointer"
             >
               Cancel
             </button>
