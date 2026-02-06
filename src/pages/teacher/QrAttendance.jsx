@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { useAlert } from "../../context/AlertContext";
 import QRCode from "qrcode"; // <-- use qrcode NOT react-qr-code
 import { db } from "../../firebase/firebaseConfig";
@@ -154,12 +155,13 @@ const QrAttendance = () => {
     <div className="flex justify-center mt-15">
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-24 left-15 text-primary flex items-center gap-1 px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
+        className="fixed top-24 left-15 text-primary flex items-center gap-1 px-4 py-2 bg-input rounded-lg hover:brightness-90 transition z-10"
       >
-        ← Back
+         <ArrowLeft size={16} />
+        <span>Back</span>
       </button>
 
-      <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center space-y-4 shadow w-full max-w-md lg:max-w-lg">
+      <div className="bg-card border-theme rounded-2xl p-6 flex flex-col items-center text-center space-y-4 shadow w-full max-w-md lg:max-w-lg">
         <h2 className="text-xl font-semibold">QR Mode Active</h2>
 
         {qrActive && (
@@ -180,7 +182,8 @@ const QrAttendance = () => {
 
             <p className="text-muted text-sm">
               Session:{" "}
-              <span className="text-white font-medium">{sessionId}</span>
+              <span className=" font-medium"
+              style={{ color: "var(--color-primary)" }}>{sessionId}</span>
             </p>
 
             <button
