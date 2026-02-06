@@ -7,7 +7,8 @@
 
 :root {
   --color-bg: #0A0A0A;       
-  --color-bg-card: #121212;  
+  --color-bg-card: #121212; 
+  --color-bg-manual: #000000; 
   --color-bg-input: #1A1A1A; 
   --color-text: #E0E0E0;     
   --color-text-muted: #9E9E9E;
@@ -21,6 +22,7 @@
 [data-theme="light"] {
   --color-bg: #f3f4f6;          /* soft gray background */
   --color-bg-card: #ffffff;     /* clean white card */
+  --color-bg-manual: #ffffff;       /* its for the classroom copy delete  */
   --color-bg-input: #f9fafb;    /* light input bg */
 
   --color-text: #111827;        /* deep dark text */
@@ -29,7 +31,7 @@
   --color-primary: #6d28d9;     /* premium purple */
   --color-success: #16a34a;     /* green */
 
-  --color-border: rgba(0, 0, 0, 0.08); /* soft border */
+  --color-border: rgba(0, 0, 0, 0.14); /* soft border */
 }
 
 
@@ -74,4 +76,13 @@ body {
     transparent 100%
   );
 }
+
+.border-theme {
+  border: 1px solid var(--color-border);
+}
+.bg-manual {
+  background: var(--color-bg-manual);
+}
+
+
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { db } from "../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -31,12 +32,13 @@ export default function AttendanceHistory() {
   }, []);
 
   return (
-    <div className="p-4">
+    <div className="p-4 ">
       <button
         onClick={() => navigate(-1)}
-        className="px-4 py-2 rounded-lg bg-card border-theme hover:brightness-90 transition"
+        className="flex items-center gap-2 px-4 py-2 bg-input rounded-lg border-theme hover:opacity-90 transition"
       >
-        ← Back
+        <ArrowLeft size={18} />
+        <span>Back</span>
       </button>
 
       <h1 className="text-xl text-center font-semibold mt-4 mb-6">

@@ -53,7 +53,7 @@ const ManualAttendance = () => {
   }, []);
 
   return (
-    <div className="bg-card border border-white/10 rounded-2xl p-8">
+    <div className="bg-card border-theme rounded-2xl p-8">
       <h2 className="text-xl font-semibold mb-3">Manual Attendance</h2>
 
       {students.length === 0 ? (
@@ -84,7 +84,7 @@ const ManualAttendance = () => {
       
       <button
         onClick={()=> navigate(-1)}
-        className="mt-4 ml-3 px-4 py-2 rounded-lg border border-white/10 bg-input hover:brightness-90 transition"
+        className="mt-4 ml-3 px-4 py-2 rounded-lg border-theme bg-input hover:brightness-90 transition"
 
       >
         Back

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Copy, Trash2 } from "lucide-react";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { useAlert } from "../../context/AlertContext";
@@ -95,8 +96,9 @@ const TeacherDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* LEFT SIDE */}
         <div className="lg:col-span-1">
-          <div className="rounded-2xl bg-card border border-white/10 p-5 sm:p-6">
+          <div className="rounded-2xl bg-card border-theme p-5 sm:p-6 shadow-sm">
             <h2 className="text-lg sm:text-xl font-medium mb-4">
               Create Classroom
             </h2>
@@ -106,7 +108,7 @@ const TeacherDashboard = () => {
                 value={className}
                 onChange={(e) => setClassName(e.target.value)}
                 placeholder="Classroom Name"
-                className="h-12 w-full px-4 bg-input border border-white/10 rounded-lg"
+                className="h-12 w-full px-4 bg-input border-theme rounded-lg outline-none"
                 required
               />
 
@@ -114,7 +116,7 @@ const TeacherDashboard = () => {
                 value={section}
                 onChange={(e) => setSection(e.target.value)}
                 placeholder="Section (e.g A)"
-                className="h-12 w-full px-4 bg-input border border-white/10 rounded-lg"
+                className="h-12 w-full px-4 bg-input border-theme rounded-lg outline-none"
                 required
               />
 
@@ -122,29 +124,36 @@ const TeacherDashboard = () => {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Subject Name"
-                className="h-12 w-full px-4 bg-input border border-white/10 rounded-lg"
+                className="h-12 w-full px-4 bg-input border-theme rounded-lg outline-none"
                 required
               />
 
-              <button className="btn-primary w-full h-11 rounded-lg">
+              <button className="btn-primary w-full h-11 rounded-lg font-medium">
                 Create Classroom
               </button>
             </form>
           </div>
         </div>
 
+        {/* RIGHT SIDE */}
         <div className="lg:col-span-2 flex flex-col space-y-4">
-          <h2 className="text-lg sm:text-l font-medium">My Classrooms</h2>
+          <h2 className="text-lg sm:text-xl font-medium">My Classrooms</h2>
 
           {myClasses.length === 0 ? (
             <p className="text-muted text-sm">No classrooms created yet.</p>
           ) : (
-            <div className=" relative flex flex-col gap-4 max-h-[540px]  overflow-y-auto no-scrollbar mask-fade-bottom">
+            <div
+              className={`relative flex flex-col gap-4 max-h-135 overflow-y-auto no-scrollbar ${
+                openMenu ? "" : "mask-fade-bottom"
+              }`}
+            >
               {myClasses.map((cls) => (
                 <div
                   key={cls.classCode}
                   onClick={() => navigate(`/teacher/class/${cls.classCode}`)}
-                  className="relative rounded-xl bg-card border border-white/10 p-4 cursor-pointer hover:border-primary/40 transition"
+                  className={`relative rounded-xl bg-card border-theme p-4 cursor-pointer hover:opacity-90 transition shadow-sm ${
+                    openMenu === cls.classCode ? "z-50" : "z-0"
+                  }`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -159,7 +168,7 @@ const TeacherDashboard = () => {
                           openMenu === cls.classCode ? null : cls.classCode,
                         );
                       }}
-                      className="text-muted hover:text-white px-2"
+                      className="text-muted hover:opacity-70 px-2"
                     >
                       ⋮
                     </button>
@@ -168,18 +177,20 @@ const TeacherDashboard = () => {
                   {openMenu === cls.classCode && (
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute right-3 top-10 w-44 bg-black border border-white/10 rounded-lg shadow-lg z-50"
+                      className="absolute right-3 top-10 w-44 bg-manual border-theme rounded-xl shadow-xl z-50 overflow-hidden"
                     >
                       <button
                         onClick={() => {
                           copyClassCode(cls.classCode);
                           setOpenMenu(null);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-white/10"
+                        className="w-full flex items-center gap-2 text-left px-4 py-2 text-sm hover:bg-input transition"
                       >
-                        Copy
+                        <Copy size={16} className="text-muted" />
+                        <span>Copy</span>
                       </button>
 
+                      <div className="h-[1px] bg-[var(--color-border)]" />
                       <button
                         onClick={() => {
                           showConfirm(
@@ -191,9 +202,10 @@ const TeacherDashboard = () => {
                           );
                           setOpenMenu(null);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                        className="w-full flex items-center gap-2 text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition"
                       >
-                        Delete
+                        <Trash2 size={16} className="text-red-500" />
+                        <span>Delete</span>
                       </button>
                     </div>
                   )}

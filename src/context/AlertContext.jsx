@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useRef } from "react";
 
 const AlertContext = createContext();
 
@@ -10,11 +10,14 @@ export const AlertProvider = ({ children }) => {
   });
 
   const [confirm, setConfirm] = useState(null);
+  const timeoutRef = useRef(null);
 
   const showAlert = (message, type = "success") => {
     setAlert({ message, type, open: true });
 
-    setTimeout(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
       setAlert((prev) => ({ ...prev, open: false }));
     }, 2500);
   };
@@ -42,7 +45,7 @@ export const AlertProvider = ({ children }) => {
 
       {/* Toast Alert */}
       {alert.open && (
-        <div className="fixed top-6 right-6 z-999 animate-slideIn">
+        <div className="fixed top-6 right-6 z-[999] animate-slideIn">
           <div
             className={`
               px-5 py-3 rounded-xl shadow-lg border flex items-start gap-3
@@ -66,20 +69,26 @@ export const AlertProvider = ({ children }) => {
 
       {/* Confirm Modal */}
       {confirm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-card p-6 rounded-xl space-y-4 w-80">
-            <p className="text-white">{confirm.message}</p>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+          <div className="bg-card border-theme p-6 rounded-xl space-y-4 w-full max-w-sm shadow-xl">
+            <p
+              className="font-medium text-base"
+              style={{ color: "var(--color-text)" }}
+            >
+              {confirm.message}
+            </p>
 
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-1 border rounded"
+                className="px-4 py-2 bg-gray-400 border-theme rounded-lg hover:bg-input transition"
+                style={{ color: "var(--color-text)" }}
                 onClick={handleCancel}
               >
                 Cancel
               </button>
 
               <button
-                className="px-4 py-1 bg-red-500 text-white rounded"
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:brightness-90 transition"
                 onClick={handleConfirm}
               >
                 {confirm.confirmText}

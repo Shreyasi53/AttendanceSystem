@@ -194,7 +194,7 @@ const ClassroomDetail = () => {
                   setShowAttendancePopup(false);
                   navigate(`/teacher/class/${classCode}/attendance`);
                 }}
-                className="btn-primary px-4 py-2 rounded-lg font-medium hover:opacity-80 transition"
+                className="btn-primary px-4 py-2 rounded-lg font-medium hover:brightness-90 transition"
               >
                 QR Attendance
               </button>
@@ -202,7 +202,7 @@ const ClassroomDetail = () => {
 
             <button
               onClick={() => setShowAttendancePopup(false)}
-              className="w-full text-sm text-muted hover:opacity-70 transition"
+              className="px-4 py-2 rounded-lg w-full bg-input border-theme text-sm text-muted hover:opacity-70 transition"
             >
               Cancel
             </button>

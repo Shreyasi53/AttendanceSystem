@@ -7,7 +7,7 @@ import { Camera } from "lucide-react";
 import { useAlert } from "../../context/AlertContext";
 
 const StudentDashboard = () => {
-  const { showAlert } = useAlert(); 
+  const { showAlert } = useAlert();
   const [classCode, setClassCode] = useState("");
   const [classExists, setClassExists] = useState(false);
   const [studentName, setStudentName] = useState("");
@@ -17,20 +17,42 @@ const StudentDashboard = () => {
 
   // Check if class exists
   const checkClassroom = async () => {
-    const classRef = doc(db, "classrooms", classCode.toUpperCase());
-    const docSnap = await getDoc(classRef);
+  const user = auth.currentUser;
+  if (!user) return showAlert("Not logged in!", "error");
 
-    if (!docSnap.exists()) {
-      showAlert("Invalid class code!");
-      setClassExists(false);
-    } else {
-      setClassExists(true);
-    }
-  };
+  const classId = classCode.toUpperCase();
+  const classRef = doc(db, "classrooms", classId);
+  const docSnap = await getDoc(classRef);
 
-  //  Join classroom
+  if (!docSnap.exists()) {
+    showAlert("Invalid class code!", "error");
+    setClassExists(false);
+    return; 
+  }
+
+  // check if already joined
+  const studentRef = doc(db, "classrooms", classId, "students", user.uid);
+  const studentSnap = await getDoc(studentRef);
+
+  if (studentSnap.exists()) {
+    showAlert("You have already joined this classroom!", "info");
+    setClassExists(false);
+    setClassCode("");
+    return;
+  }
+
+  // if not joined then show form
+  setClassExists(true);
+  setClassCode(classId);
+};
+
+//  Join classroom
   const joinClassroom = async (e) => {
     e.preventDefault();
+
+     const cleanName = studentName.trim();
+  const cleanRoll = rollNo.trim();
+
 
     const user = auth.currentUser;
     if (!user) return showAlert("Not logged in!");
@@ -39,8 +61,8 @@ const StudentDashboard = () => {
     const studentRef = doc(db, "classrooms", classId, "students", user.uid);
 
     await setDoc(studentRef, {
-      studentName,
-      rollNo,
+      studentName: cleanName,
+      rollNo: cleanRoll,
       uid: user.uid,
       joinedAt: new Date(),
     });
@@ -143,22 +165,33 @@ const StudentDashboard = () => {
           <form onSubmit={joinClassroom} className="space-y-4">
             <input
               value={studentName}
-              onChange={(e) => setStudentName(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^[a-zA-Z\s]*$/.test(val)) {
+                  setStudentName(val);
+                }
+              }}
               placeholder="Your Name"
-              className="w-full h-12 px-4 bg-input/90 border border-white/10 rounded-lg shadow-inner placeholder-(--color-text-muted) focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)/40 outline-none"
+              className="w-full h-12 px-4 bg-input/90 border border-white/10 rounded-lg shadow-inner placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/40 outline-none"
               required
             />
+
             <input
               value={rollNo}
-              onChange={(e) => setRollNo(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^\d*$/.test(val)) {
+                  setRollNo(val);
+                }
+              }}
               placeholder="Roll Number"
-              className="w-full h-12 px-4 bg-input/90 border border-white/10 rounded-lg shadow-inner placeholder-(--color-text-muted) focus:border-(--color-primary) focus:ring-1 focus:ring-(--color-primary)/40 outline-none"
+              className="w-full h-12 px-4 bg-input/90 border border-white/10 rounded-lg shadow-inner placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/40 outline-none"
               required
             />
 
             <button
               type="submit"
-              className="w-full h-12 rounded-lg bg-(--color-primary) hover:bg-(--color-primary)/80 text-white font-medium transition-colors"
+              className="w-full h-12 rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-white font-medium transition-colors"
             >
               Join Classroom
             </button>
