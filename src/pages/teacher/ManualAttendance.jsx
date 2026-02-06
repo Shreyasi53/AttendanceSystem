@@ -6,7 +6,7 @@ import {
   getDocs,
   doc,
   setDoc,
-  serverTimestamp
+  serverTimestamp,
 } from "firebase/firestore";
 import { useAlert } from "../../context/AlertContext";
 
@@ -33,19 +33,39 @@ const ManualAttendance = () => {
 
   const saveManualAttendance = async () => {
     const sessionId = generateSessionId();
-    const present = Object.keys(selected).filter(uid => selected[uid]);
 
-    const ref = doc(db, "classrooms", classCode, "sessions", sessionId);
-    await setDoc(ref, {
+    const historySessionRef = doc(
+      db,
+      "attendance",
+      classCode,
+      "sessions",
+      sessionId,
+    );
+
+    // create session metadata
+    await setDoc(historySessionRef, {
       sessionId,
       type: "manual",
-      status: "closed",
-      present,
-      createdAt: serverTimestamp(),
+      endedAt: serverTimestamp(),
     });
 
-    showAlert("Attendance Saved!");
-    onBack();
+    const studentsColRef = collection(historySessionRef, "students");
+
+    // save only present students
+    for (const std of students) {
+      if (selected[std.uid]) {
+        await setDoc(doc(studentsColRef, std.uid), {
+          uid: std.uid,
+          name: std.studentName,
+          rollNo: std.rollNo,
+          time: serverTimestamp(),
+          status: "present",
+        });
+      }
+    }
+
+    showAlert("Manual attendance saved!", "success");
+    navigate(-1);
   };
 
   useEffect(() => {
@@ -69,7 +89,9 @@ const ManualAttendance = () => {
                   setSelected({ ...selected, [std.uid]: !selected[std.uid] })
                 }
               />
-              <span>{std.rollNo} — {std.studentName}</span>
+              <span>
+                {std.rollNo} — {std.studentName}
+              </span>
             </li>
           ))}
         </ul>
@@ -81,11 +103,10 @@ const ManualAttendance = () => {
       >
         Save Attendance
       </button>
-      
-      <button
-        onClick={()=> navigate(-1)}
-        className="mt-4 ml-3 px-4 py-2 rounded-lg border-theme bg-input hover:brightness-90 transition"
 
+      <button
+        onClick={() => navigate(-1)}
+        className="mt-4 ml-3 px-4 py-2 rounded-lg border-theme bg-input hover:brightness-90 transition"
       >
         Back
       </button>

@@ -76,7 +76,7 @@ const ClassroomDetail = () => {
     return () => unsub();
   }, []);
 
-  // Loading UI
+  //Loading UI
   if (!classInfo) {
     return (
       <div

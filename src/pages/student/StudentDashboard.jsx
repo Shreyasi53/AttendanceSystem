@@ -17,42 +17,41 @@ const StudentDashboard = () => {
 
   // Check if class exists
   const checkClassroom = async () => {
-  const user = auth.currentUser;
-  if (!user) return showAlert("Not logged in!", "error");
+    const user = auth.currentUser;
+    if (!user) return showAlert("Not logged in!", "error");
 
-  const classId = classCode.toUpperCase();
-  const classRef = doc(db, "classrooms", classId);
-  const docSnap = await getDoc(classRef);
+    const classId = classCode.toUpperCase();
+    const classRef = doc(db, "classrooms", classId);
+    const docSnap = await getDoc(classRef);
 
-  if (!docSnap.exists()) {
-    showAlert("Invalid class code!", "error");
-    setClassExists(false);
-    return; 
-  }
+    if (!docSnap.exists()) {
+      showAlert("Invalid class code!", "error");
+      setClassExists(false);
+      return;
+    }
 
-  // check if already joined
-  const studentRef = doc(db, "classrooms", classId, "students", user.uid);
-  const studentSnap = await getDoc(studentRef);
+    // check if already joined
+    const studentRef = doc(db, "classrooms", classId, "students", user.uid);
+    const studentSnap = await getDoc(studentRef);
 
-  if (studentSnap.exists()) {
-    showAlert("You have already joined this classroom!", "info");
-    setClassExists(false);
-    setClassCode("");
-    return;
-  }
+    if (studentSnap.exists()) {
+      showAlert("You have already joined this classroom!", "info");
+      setClassExists(false);
+      setClassCode("");
+      return;
+    }
 
-  // if not joined then show form
-  setClassExists(true);
-  setClassCode(classId);
-};
+    // if not joined then show form
+    setClassExists(true);
+    setClassCode(classId);
+  };
 
-//  Join classroom
+  //  Join classroom
   const joinClassroom = async (e) => {
     e.preventDefault();
 
-     const cleanName = studentName.trim();
-  const cleanRoll = rollNo.trim();
-
+    const cleanName = studentName.trim();
+    const cleanRoll = rollNo.trim();
 
     const user = auth.currentUser;
     if (!user) return showAlert("Not logged in!");
@@ -107,99 +106,78 @@ const StudentDashboard = () => {
   }, []);
 
   return (
-    <div className="space-y-8">
-      {!classExists && (
-        <div className="p-6 rounded-xl bg-card border border-white/10 shadow-lg shadow-black/30 backdrop-blur-sm space-y-4">
-          <h2 className="text-xl font-semibold">Join a Classroom</h2>
+  <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              value={classCode}
-              onChange={(e) => setClassCode(e.target.value)}
-              placeholder="Enter class code"
-              className="
-      w-full
-      sm:flex-1
-      h-12
-      px-4
-      bg-input/90
-      text-[var(--color-text)]
-      border
-      border-white/10
-      rounded-lg
-      shadow-inner
-      placeholder-[var(--color-text-muted)]
-      focus:border-[var(--color-primary)]
-      focus:ring-1
-      focus:ring-[var(--color-primary)]/40
-      outline-none
-    "
-            />
+      {/* LEFT SIDE (Join Classroom / Info Form) */}
+      <div className="lg:col-span-1 space-y-8">
 
-            <button
-              onClick={checkClassroom}
-              className="
-      w-full
-      sm:w-auto
-      px-5
-      h-12
-      rounded-lg
-      bg-[var(--color-primary)]
-      text-white
-      font-medium
-      transition-colors
-      sm:hover:opacity-80
-      active:scale-95
-    "
-            >
-              Check
-            </button>
+        {!classExists && (
+          <div className="p-6 rounded-xl bg-card border-theme shadow-lg space-y-4">
+            <h2 className="text-xl font-semibold">Join a Classroom</h2>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                value={classCode}
+                onChange={(e) => setClassCode(e.target.value)}
+                placeholder="Enter class code"
+                className="w-full h-11 px-4 bg-input border-theme rounded-lg outline-none"
+              />
+              <button
+                onClick={checkClassroom}
+                className="w-full sm:w-auto px-4 h-11 rounded-lg btn-primary"
+              >
+                Check
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {classExists && (
-        <div className="p-6 rounded-xl bg-card border border-white/10 shadow-lg shadow-black/30 backdrop-blur-sm space-y-4">
-          <h2 className="text-xl font-semibold">Your Information</h2>
+        {classExists && (
+          <div className="p-6 rounded-xl bg-card border-theme shadow-lg space-y-4">
+            <h2 className="text-xl font-semibold">Your Information</h2>
 
-          <form onSubmit={joinClassroom} className="space-y-4">
-            <input
-              value={studentName}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (/^[a-zA-Z\s]*$/.test(val)) {
-                  setStudentName(val);
-                }
-              }}
-              placeholder="Your Name"
-              className="w-full h-12 px-4 bg-input/90 border border-white/10 rounded-lg shadow-inner placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/40 outline-none"
-              required
-            />
+            <form onSubmit={joinClassroom} className="space-y-4">
+              <input
+                value={studentName}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^[a-zA-Z\s]*$/.test(val)) {
+                    setStudentName(val);
+                  }
+                }}
+                placeholder="Your Name"
+                className="w-full h-12 px-4 bg-input/90 border-theme rounded-lg shadow-inner focus:ring-1 focus:ring-[var(--color-primary)]/40 outline-none"
+                required
+              />
 
-            <input
-              value={rollNo}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (/^\d*$/.test(val)) {
-                  setRollNo(val);
-                }
-              }}
-              placeholder="Roll Number"
-              className="w-full h-12 px-4 bg-input/90 border border-white/10 rounded-lg shadow-inner placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/40 outline-none"
-              required
-            />
+              <input
+                value={rollNo}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^\d*$/.test(val)) {
+                    setRollNo(val);
+                  }
+                }}
+                placeholder="Roll Number"
+                className="w-full h-12 px-4 bg-input/90 border-theme rounded-lg shadow-inner focus:ring-1 focus:ring-[var(--color-primary)]/40 outline-none"
+                required
+              />
 
-            <button
-              type="submit"
-              className="w-full h-12 rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-white font-medium transition-colors"
-            >
-              Join Classroom
-            </button>
-          </form>
-        </div>
-      )}
+              <button
+                type="submit"
+                className="w-full h-12 rounded-lg btn-primary font-medium"
+              >
+                Join Classroom
+              </button>
+            </form>
+          </div>
+        )}
 
-      <div className="space-y-3">
+      </div>
+
+      {/* RIGHT SIDE (My Classrooms) */}
+      <div className="lg:col-span-2 space-y-3">
         <h2 className="text-xl font-semibold">My Classrooms</h2>
 
         {joinedClasses.length === 0 ? (
@@ -211,24 +189,28 @@ const StudentDashboard = () => {
             {joinedClasses.map((cls, i) => (
               <div
                 key={i}
-                className="p-5 rounded-xl bg-card border border-white/10 shadow-lg shadow-black/30 backdrop-blur-sm hover:-translate-y-1 hover:shadow-xl transition cursor-pointer"
+                className="p-4 rounded-xl bg-card border-theme shadow-lg hover:-translate-y-1 transition"
               >
                 <h3 className="text-lg font-medium">{cls.name}</h3>
-                <p className="text-muted text-sm">{cls.section}</p>
+                <p className="text-muted">{cls.section}</p>
                 <p className="text-muted text-xs mt-2">{cls.subject}</p>
               </div>
             ))}
-            <button
-              onClick={() => navigate("/student/scan")}
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-card border border-white/10 shadow-lg flex items-center justify-center hover:brightness-110 transition"
-            >
-              <Camera className="w-9 h-9 text-white" strokeWidth={2} />
-            </button>
           </div>
         )}
       </div>
     </div>
-  );
+
+    {/* Floating Scan Button */}
+    <button
+      onClick={() => navigate("/student/scan")}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-card border-theme shadow-lg flex items-center justify-center hover:brightness-90 transition"
+    >
+      <Camera className="w-9 h-9 text-primary" strokeWidth={2} />
+    </button>
+  </div>
+);
+
 };
 
 export default StudentDashboard;

@@ -29,7 +29,9 @@ export default function AttendanceHistory() {
       });
 
       // sort by time (latest first)
-      result.sort((a, b) => (b.endedAt?.seconds || 0) - (a.endedAt?.seconds || 0));
+      result.sort(
+        (a, b) => (b.endedAt?.seconds || 0) - (a.endedAt?.seconds || 0),
+      );
 
       setSessions(result);
     };
@@ -37,38 +39,56 @@ export default function AttendanceHistory() {
     load();
   }, []);
 
-  // Download Excel for one session
   const downloadExcel = async (sessionId) => {
     try {
-      const studentsRef = collection(
+      // 1) All class students
+      const classStudentsRef = collection(
+        db,
+        "classrooms",
+        classCode,
+        "students",
+      );
+      const classSnap = await getDocs(classStudentsRef);
+
+      let allStudents = [];
+      classSnap.forEach((doc) => {
+        allStudents.push(doc.data());
+      });
+
+      if (allStudents.length === 0) {
+        showAlert("No students found in classroom!", "info");
+        return;
+      }
+
+      // 2) Present students in that session
+      const presentRef = collection(
         db,
         "attendance",
         classCode,
         "sessions",
         sessionId,
-        "students"
+        "students",
       );
 
-      const snap = await getDocs(studentsRef);
+      const presentSnap = await getDocs(presentRef);
 
-      let students = [];
-      snap.forEach((doc) => students.push(doc.data()));
+      let presentMap = {};
+      presentSnap.forEach((doc) => {
+        const data = doc.data();
+        presentMap[data.uid] = true;
+      });
 
-      if (students.length === 0) {
-        showAlert("No students found in this session!", "info");
-        return;
-      }
+      // 3) Create final list (Present/Absent)
+      allStudents.sort((a, b) => parseInt(a.rollNo) - parseInt(b.rollNo));
 
-      // sort by roll no
-      students.sort((a, b) => parseInt(a.rollNo) - parseInt(b.rollNo));
-
-      const formatted = students.map((s, index) => ({
+      const formatted = allStudents.map((s, index) => ({
         "S.No": index + 1,
         "Roll No": s.rollNo,
-        Name: s.name,
-        Status: s.status,
+        Name: s.studentName,
+        Status: presentMap[s.uid] ? "Present" : "Absent",
       }));
 
+      // Excel creation
       const worksheet = XLSX.utils.json_to_sheet(formatted);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
@@ -84,7 +104,7 @@ export default function AttendanceHistory() {
 
       saveAs(fileData, `${sessionId}_attendance.xlsx`);
 
-      showAlert("Excel downloaded successfully!", "success");
+      showAlert("Full attendance sheet downloaded!", "success");
     } catch (err) {
       console.log(err);
       showAlert("Failed to download excel!", "error");

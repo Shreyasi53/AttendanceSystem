@@ -11,9 +11,13 @@ import {
 } from "firebase/auth";
 
 const AuthForm = () => {
+  const [mode, setMode] = useState("login"); 
+  const sliderTransform =
+    mode === "login" ? "translateX(0%)" : "translateX(100%)";
+
   const { showAlert } = useAlert();
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -30,6 +34,7 @@ const AuthForm = () => {
     });
   };
 
+  // SIGNUP
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
 
@@ -42,10 +47,11 @@ const AuthForm = () => {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
-        formData.password,
+        formData.password
       );
 
       const user = userCredential.user;
+
       await updateProfile(user, {
         displayName: formData.name,
       });
@@ -58,80 +64,89 @@ const AuthForm = () => {
       });
 
       showAlert("Signup Successful!", "success");
-      await auth.currentUser.reload();
-      setIsLogin(true);
+
+      setMode("login");
     } catch (error) {
       showAlert(error.message, "error");
     }
   };
 
+  // LOGIN
   const handleLoginSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      formData.email,
-      formData.password
-    );
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
 
-    const user = userCredential.user;
+      const user = userCredential.user;
 
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    const userData = userDoc.data();
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
 
-    showAlert("Login Successful!", "success");
+      showAlert("Login Successful!", "success");
 
-    setTimeout(() => {
-      if (userData.role === "teacher") {
-        navigate("/teacher/dashboard");
-      } else {
-        navigate("/student/dashboard");
-      }
-    }, 800); // small delay so toast is visible
-
-  } catch (error) {
-    showAlert(error.message, "error");
-  }
-};
-
+      setTimeout(() => {
+        if (userData.role === "teacher") {
+          navigate("/teacher/dashboard");
+        } else {
+          navigate("/student/dashboard");
+        }
+      }, 800);
+    } catch (error) {
+      showAlert(error.message, "error");
+    }
+  };
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
+      className="min-h-screen flex flex-col items-center justify-start mt-30 px-4"
       style={{ background: "var(--color-bg)", color: "var(--color-text)" }}
     >
       <div
-        className="w-full max-w-md rounded-2xl shadow-xl p-8 border border-white/10"
+        className="w-full max-w-md rounded-2xl shadow-xl p-8 border-theme"
         style={{ background: "var(--color-bg-card)" }}
       >
-        <div
-          className="flex mb-8 rounded-lg overflow-hidden gap-2"
-          style={{ background: "var(--color-bg-input)" }}
-        >
+        {/* Tabs */}
+        <div className="relative flex border-theme rounded-full mb-6 bg-input overflow-hidden">
+          {/* LOGIN LEFT */}
           <button
-            className={`flex-1 py-2 text-sm font-semibold transition-all rounded-lg ${
-              isLogin ? "text-black" : "text-muted"
+            className={`flex-1 py-3 text-center font-semibold focus:outline-none z-10 transition ${
+              mode === "login" ? "text-white" : "text-muted"
             }`}
-            style={isLogin ? { background: "white" } : {}}
-            onClick={() => setIsLogin(true)}
+            onClick={() => setMode("login")}
+            aria-pressed={mode === "login"}
           >
             Login
           </button>
 
+          {/* SIGNUP RIGHT */}
           <button
-            className={`flex-1 py-2 text-sm font-semibold transition-all rounded-lg ${
-              !isLogin ? "text-black" : "text-muted"
+            className={`flex-1 py-3 text-center font-semibold focus:outline-none z-10 transition ${
+              mode === "signup" ? "text-white" : "text-muted"
             }`}
-            style={!isLogin ? { background: "white" } : {}}
-            onClick={() => setIsLogin(false)}
+            onClick={() => setMode("signup")}
+            aria-pressed={mode === "signup"}
           >
-            Sign Up
+            Sign up
           </button>
+
+          {/* Slider */}
+          <div
+            aria-hidden
+            className="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-full transition-transform duration-300"
+            style={{
+              transform: sliderTransform,
+              background: "var(--color-primary)",
+            }}
+          />
         </div>
 
         {/* Forms */}
-        {isLogin ? (
+        {mode === "login" ? (
           // LOGIN FORM
           <form className="space-y-5" onSubmit={handleLoginSubmit}>
             <div>
@@ -141,12 +156,8 @@ const AuthForm = () => {
                 name="email"
                 onChange={handleChange}
                 placeholder="Enter your email"
-                className="w-full p-3 rounded-lg outline-none border text-sm"
-                style={{
-                  background: "var(--color-bg-input)",
-                  borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)",
-                }}
+                className="w-full p-3 rounded-lg outline-none border-theme text-sm bg-input"
+                required
               />
             </div>
 
@@ -158,16 +169,11 @@ const AuthForm = () => {
                   name="password"
                   onChange={handleChange}
                   placeholder="Enter your password"
-                  className="w-full p-3 rounded-lg outline-none border text-sm pr-10"
-                  style={{
-                    background: "var(--color-bg-input)",
-                    borderColor: "var(--color-text-muted)",
-                    color: "var(--color-text)",
-                  }}
+                  className="w-full p-3 rounded-lg outline-none border-theme text-sm pr-10 bg-input"
+                  required
                 />
                 <span
-                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                  style={{ color: "var(--color-text-muted)" }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -177,24 +183,25 @@ const AuthForm = () => {
 
             <button
               type="submit"
-              className="w-full py-3 font-semibold rounded-lg btn-success"
-              style={{ background: "var(--color-success)" }}
+              className="w-full py-3 font-semibold rounded-lg btn-primary"
             >
               Login
             </button>
 
-            <p className="text-sm mt-3 text-muted">
-              Not a Member?{" "}
+            {/* Added P tag */}
+            <p className="text-sm text-muted text-center">
+              Don&apos;t have an account?{" "}
               <span
-                className="underline cursor-pointer"
+                className="cursor-pointer font-semibold"
                 style={{ color: "var(--color-primary)" }}
-                onClick={() => setIsLogin(false)}
+                onClick={() => setMode("signup")}
               >
-                Signup now
+                Sign up now
               </span>
             </p>
           </form>
         ) : (
+          // SIGNUP FORM
           <form className="space-y-5" onSubmit={handleSignupSubmit}>
             <div>
               <label className="text-sm text-muted mb-1 block">Name</label>
@@ -203,12 +210,8 @@ const AuthForm = () => {
                 name="name"
                 onChange={handleChange}
                 placeholder="Enter your name"
-                className="w-full p-3 rounded-lg outline-none border text-sm"
-                style={{
-                  background: "var(--color-bg-input)",
-                  borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)",
-                }}
+                className="w-full p-3 rounded-lg outline-none border-theme text-sm bg-input"
+                required
               />
             </div>
 
@@ -219,12 +222,8 @@ const AuthForm = () => {
                 name="email"
                 onChange={handleChange}
                 placeholder="Enter your email"
-                className="w-full p-3 rounded-lg outline-none border text-sm"
-                style={{
-                  background: "var(--color-bg-input)",
-                  borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)",
-                }}
+                className="w-full p-3 rounded-lg outline-none border-theme text-sm bg-input"
+                required
               />
             </div>
 
@@ -236,16 +235,11 @@ const AuthForm = () => {
                   name="password"
                   onChange={handleChange}
                   placeholder="Create a password"
-                  className="w-full p-3 rounded-lg outline-none border text-sm pr-10"
-                  style={{
-                    background: "var(--color-bg-input)",
-                    borderColor: "var(--color-text-muted)",
-                    color: "var(--color-text)",
-                  }}
+                  className="w-full p-3 rounded-lg outline-none border-theme text-sm pr-10 bg-input"
+                  required
                 />
                 <span
-                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                  style={{ color: "var(--color-text-muted)" }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -258,12 +252,8 @@ const AuthForm = () => {
               <select
                 name="role"
                 onChange={handleChange}
-                className="w-full p-3 rounded-lg outline-none border text-sm"
-                style={{
-                  background: "var(--color-bg-input)",
-                  borderColor: "var(--color-text-muted)",
-                  color: "var(--color-text)",
-                }}
+                className="w-full p-3 rounded-lg outline-none border-theme text-sm bg-input"
+                required
               >
                 <option value="">Select role</option>
                 <option value="student">Student</option>
@@ -273,11 +263,22 @@ const AuthForm = () => {
 
             <button
               type="submit"
-              className="w-full py-3 font-semibold rounded-lg btn-success"
-              style={{ background: "var(--color-success)" }}
+              className="w-full py-3 font-semibold rounded-lg btn-primary"
             >
               Sign Up
             </button>
+
+            {/* Added P tag */}
+            <p className="text-sm text-muted text-center">
+              Already have an account?{" "}
+              <span
+                className="cursor-pointer font-semibold"
+                style={{ color: "var(--color-primary)" }}
+                onClick={() => setMode("login")}
+              >
+                Login
+              </span>
+            </p>
           </form>
         )}
       </div>
