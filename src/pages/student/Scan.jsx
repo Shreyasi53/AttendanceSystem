@@ -13,7 +13,8 @@ import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
 
-const MAX_DISTANCE = 100;
+const MAX_DISTANCE = 200;
+const MAX_ACCURACY = 150;
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
@@ -40,8 +41,6 @@ export default function Scan() {
 
   const [waiting, setWaiting] = useState(false);
   const [scanned, setScanned] = useState(false);
-
-  const [pendingPath, setPendingPath] = useState(null);
 
   const heartbeatIntervalRef = useRef(null);
 
@@ -129,14 +128,14 @@ export default function Scan() {
           (d) =>
             d.label.toLowerCase().includes("back") ||
             d.label.toLowerCase().includes("rear") ||
-            d.label.toLowerCase().includes("environment")
+            d.label.toLowerCase().includes("environment"),
         );
 
         if (!backCam) {
           backCam = devices.find(
             (d) =>
               !d.label.toLowerCase().includes("wide") &&
-              !d.label.toLowerCase().includes("depth")
+              !d.label.toLowerCase().includes("depth"),
           );
         }
 
@@ -165,13 +164,13 @@ export default function Scan() {
             },
             (scanErr) => {
               console.warn("SCAN ERROR:", scanErr);
-            }
+            },
           )
           .catch((err) => {
             console.error("CAMERA START FAILED:", err);
             showAlert(
               "Camera failed to start. Allow camera permissions & retry.",
-              "error"
+              "error",
             );
           });
       })
@@ -212,7 +211,7 @@ export default function Scan() {
           "classrooms",
           classCode,
           "sessions",
-          sessionId
+          sessionId,
         );
 
         const snap = await getDoc(sessionRef);
@@ -235,8 +234,17 @@ export default function Scan() {
             studentLoc.lat,
             studentLoc.lng,
             sessionData.teacherLat,
-            sessionData.teacherLng
+            sessionData.teacherLng,
           );
+          const accuracy = pos.coords.accuracy;
+
+          if (accuracy > MAX_ACCURACY) {
+            showAlert(
+              "GPS accuracy is too low. Move near window / enable high accuracy.",
+              "error",
+            );
+            return;
+          }
 
           if (dist > MAX_DISTANCE) {
             showAlert("You are too far from classroom!", "error");
@@ -250,7 +258,7 @@ export default function Scan() {
           "classrooms",
           classCode,
           "students",
-          user.uid
+          user.uid,
         );
 
         const studentSnap = await getDoc(studentRef);
@@ -269,7 +277,7 @@ export default function Scan() {
           "sessions",
           sessionId,
           "pending",
-          user.uid
+          user.uid,
         );
 
         await setDoc(pendingRef, {
@@ -291,7 +299,7 @@ export default function Scan() {
 
         waitForTeacherStop(sessionRef, pendingRef);
       },
-      () => showAlert("Location required!", "error")
+      () => showAlert("Location required!", "error"),
     );
   };
 
