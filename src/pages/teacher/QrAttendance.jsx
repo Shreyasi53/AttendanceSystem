@@ -22,7 +22,7 @@ const QrAttendance = () => {
 
   const { showAlert, showConfirm } = useAlert();
   const navigate = useNavigate();
-  const HEARTBEAT_LIMIT = 15; // seconds
+  const HEARTBEAT_LIMIT = 7; // seconds
 
   const generateSessionId = () =>
     "SESSION_" + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -135,8 +135,11 @@ const QrAttendance = () => {
       // Move pending -> attendance history
       for (const p of pendingSnap.docs) {
         const data = p.data();
-        const lastSeen = data.lastSeen?.toDate?.();
 
+        // ❌ If student left tab/app => absent
+        if (data.status === "left" || data.status === "paused") continue;
+
+        const lastSeen = data.lastSeen?.toDate?.();
         if (!lastSeen) continue;
 
         const now = new Date();

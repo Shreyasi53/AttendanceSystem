@@ -13,8 +13,11 @@ import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
 
-const MAX_DISTANCE = 80; // recommended for classroom
-const MAX_ACCURACY = 200; // allow indoor GPS
+const MAX_DISTANCE = 80;
+const MAX_ACCURACY = 200;
+
+const LEAVE_LIMIT = 5; // seconds allowed outside tab before absent
+const HEARTBEAT_INTERVAL = 3000; // 3 sec
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
@@ -41,10 +44,10 @@ export default function Scan() {
 
   const [waiting, setWaiting] = useState(false);
   const [scanned, setScanned] = useState(false);
-
   const [pendingPath, setPendingPath] = useState(null);
 
   const heartbeatIntervalRef = useRef(null);
+  const leaveTimeoutRef = useRef(null);
 
   const messages = [
     "Wait for teacher...",
@@ -80,11 +83,12 @@ export default function Scan() {
       try {
         await updateDoc(pendingRef, {
           lastSeen: serverTimestamp(),
+          status: "waiting",
         });
       } catch (err) {
         console.log("Heartbeat failed:", err);
       }
-    }, 3000);
+    }, HEARTBEAT_INTERVAL);
   };
 
   // Stop Heartbeat
@@ -95,9 +99,20 @@ export default function Scan() {
     }
   };
 
-  // 🔥 STRICT ANTI CHEAT: if student leaves tab/app => status left
+  // Anti-cheat: if student leaves tab/app for more than LEAVE_LIMIT seconds => mark left
   useEffect(() => {
     if (!waiting || !pendingPath) return;
+
+    const markPaused = async () => {
+      try {
+        await updateDoc(pendingPath, {
+          status: "paused",
+          pausedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.log("Failed to mark paused:", err);
+      }
+    };
 
     const markLeft = async () => {
       try {
@@ -112,17 +127,32 @@ export default function Scan() {
 
     const handleVisibilityChange = async () => {
       if (document.hidden) {
-        await markLeft();
-        showAlert("You left the attendance page! Marked absent!", "error");
+        await markPaused();
+
+        // start leave timer
+        leaveTimeoutRef.current = setTimeout(async () => {
+          await markLeft();
+        }, LEAVE_LIMIT * 1000);
+      } else {
+        // if student comes back, cancel absent timer
+        if (leaveTimeoutRef.current) {
+          clearTimeout(leaveTimeoutRef.current);
+          leaveTimeoutRef.current = null;
+        }
+
+        try {
+          await updateDoc(pendingPath, {
+            status: "waiting",
+            backAt: serverTimestamp(),
+          });
+        } catch {}
       }
     };
 
     const handleBeforeUnload = async (e) => {
-      if (waiting) {
-        await markLeft();
-        e.preventDefault();
-        e.returnValue = "";
-      }
+      await markLeft();
+      e.preventDefault();
+      e.returnValue = "";
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -131,6 +161,11 @@ export default function Scan() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("beforeunload", handleBeforeUnload);
+
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current);
+        leaveTimeoutRef.current = null;
+      }
     };
   }, [waiting, pendingPath]);
 
@@ -221,14 +256,7 @@ export default function Scan() {
           lng: pos.coords.longitude,
         };
 
-        const sessionRef = doc(
-          db,
-          "classrooms",
-          classCode,
-          "sessions",
-          sessionId
-        );
-
+        const sessionRef = doc(db, "classrooms", classCode, "sessions", sessionId);
         const snap = await getDoc(sessionRef);
 
         if (!snap.exists()) {
@@ -270,14 +298,7 @@ export default function Scan() {
         }
 
         // Student must be joined check
-        const studentRef = doc(
-          db,
-          "classrooms",
-          classCode,
-          "students",
-          user.uid
-        );
-
+        const studentRef = doc(db, "classrooms", classCode, "students", user.uid);
         const studentSnap = await getDoc(studentRef);
 
         if (!studentSnap.exists()) {
@@ -307,11 +328,9 @@ export default function Scan() {
           status: "waiting",
         });
 
-        setPendingPath(pendingRef); // 🔥 store pending ref
-
+        setPendingPath(pendingRef);
         setWaiting(true);
 
-        // Start heartbeat immediately
         startHeartbeat(pendingRef);
 
         waitForTeacherStop(sessionRef, pendingRef);
