@@ -178,14 +178,14 @@ export default function Scan() {
           (d) =>
             d.label.toLowerCase().includes("back") ||
             d.label.toLowerCase().includes("rear") ||
-            d.label.toLowerCase().includes("environment")
+            d.label.toLowerCase().includes("environment"),
         );
 
         if (!backCam) {
           backCam = devices.find(
             (d) =>
               !d.label.toLowerCase().includes("wide") &&
-              !d.label.toLowerCase().includes("depth")
+              !d.label.toLowerCase().includes("depth"),
           );
         }
 
@@ -214,13 +214,13 @@ export default function Scan() {
             },
             (scanErr) => {
               console.warn("SCAN ERROR:", scanErr);
-            }
+            },
           )
           .catch((err) => {
             console.error("CAMERA START FAILED:", err);
             showAlert(
               "Camera failed to start. Allow camera permissions & retry.",
-              "error"
+              "error",
             );
           });
       })
@@ -248,6 +248,9 @@ export default function Scan() {
       showAlert("Login required!", "error");
       return;
     }
+    // show waiting instantly
+    setWaiting(true);
+    setWaitMsg("Verifying your location...");
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -256,7 +259,13 @@ export default function Scan() {
           lng: pos.coords.longitude,
         };
 
-        const sessionRef = doc(db, "classrooms", classCode, "sessions", sessionId);
+        const sessionRef = doc(
+          db,
+          "classrooms",
+          classCode,
+          "sessions",
+          sessionId,
+        );
         const snap = await getDoc(sessionRef);
 
         if (!snap.exists()) {
@@ -277,7 +286,7 @@ export default function Scan() {
             studentLoc.lat,
             studentLoc.lng,
             sessionData.teacherLat,
-            sessionData.teacherLng
+            sessionData.teacherLng,
           );
 
           const accuracy = pos.coords.accuracy;
@@ -286,7 +295,7 @@ export default function Scan() {
           if (accuracy > MAX_ACCURACY) {
             showAlert(
               "GPS accuracy too low. Turn on High Accuracy GPS / move near window.",
-              "error"
+              "error",
             );
             return;
           }
@@ -298,7 +307,13 @@ export default function Scan() {
         }
 
         // Student must be joined check
-        const studentRef = doc(db, "classrooms", classCode, "students", user.uid);
+        const studentRef = doc(
+          db,
+          "classrooms",
+          classCode,
+          "students",
+          user.uid,
+        );
         const studentSnap = await getDoc(studentRef);
 
         if (!studentSnap.exists()) {
@@ -315,7 +330,7 @@ export default function Scan() {
           "sessions",
           sessionId,
           "pending",
-          user.uid
+          user.uid,
         );
 
         await setDoc(pendingRef, {
@@ -335,7 +350,7 @@ export default function Scan() {
 
         waitForTeacherStop(sessionRef, pendingRef);
       },
-      () => showAlert("Location required!", "error")
+      () => showAlert("Location required!", "error"),
     );
   };
 
