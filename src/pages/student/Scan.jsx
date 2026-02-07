@@ -13,7 +13,7 @@ import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
 
-const MAX_DISTANCE = 300;
+const MAX_DISTANCE = 100;
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
