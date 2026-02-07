@@ -190,7 +190,6 @@ const QrAttendance = () => {
           showConfirm(
             "Attendance is still running. If you go back now, it will not be saved. Continue?",
             async () => {
-              await stopQrSession();
               navigate(-1);
             },
             "Yes",

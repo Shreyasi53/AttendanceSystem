@@ -42,6 +42,8 @@ export default function Scan() {
   const [waiting, setWaiting] = useState(false);
   const [scanned, setScanned] = useState(false);
 
+  const [pendingPath, setPendingPath] = useState(null);
+
   const heartbeatIntervalRef = useRef(null);
 
   const messages = [
@@ -68,32 +70,6 @@ export default function Scan() {
     return () => clearInterval(interval);
   }, [waiting]);
 
-  // Warn if student switches tab
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.hidden && waiting) {
-        showAlert("Don't switch tabs! Attendance may be cancelled!", "error");
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibility);
-  }, [waiting]);
-
-  // Warn if student closes tab
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (waiting) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [waiting]);
-
   // Start Heartbeat
   const startHeartbeat = (pendingRef) => {
     if (heartbeatIntervalRef.current) {
@@ -118,6 +94,45 @@ export default function Scan() {
       heartbeatIntervalRef.current = null;
     }
   };
+
+  // 🔥 STRICT ANTI CHEAT: if student leaves tab/app => status left
+  useEffect(() => {
+    if (!waiting || !pendingPath) return;
+
+    const markLeft = async () => {
+      try {
+        await updateDoc(pendingPath, {
+          status: "left",
+          leftAt: serverTimestamp(),
+        });
+      } catch (err) {
+        console.log("Failed to mark left:", err);
+      }
+    };
+
+    const handleVisibilityChange = async () => {
+      if (document.hidden) {
+        await markLeft();
+        showAlert("You left the attendance page! Marked absent!", "error");
+      }
+    };
+
+    const handleBeforeUnload = async (e) => {
+      if (waiting) {
+        await markLeft();
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [waiting, pendingPath]);
 
   useEffect(() => {
     const html5QrCode = new Html5Qrcode(qrRegionId);
@@ -291,6 +306,8 @@ export default function Scan() {
           lastSeen: serverTimestamp(),
           status: "waiting",
         });
+
+        setPendingPath(pendingRef); // 🔥 store pending ref
 
         setWaiting(true);
 
