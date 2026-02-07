@@ -22,6 +22,7 @@ const QrAttendance = () => {
 
   const { showAlert, showConfirm } = useAlert();
   const navigate = useNavigate();
+  const HEARTBEAT_LIMIT = 8;
 
   const generateSessionId = () =>
     "SESSION_" + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -40,7 +41,7 @@ const QrAttendance = () => {
       },
       (err, url) => {
         if (!err) setQrUrl(url);
-      }
+      },
     );
   };
 
@@ -52,33 +53,39 @@ const QrAttendance = () => {
       async (pos) => {
         const { latitude, longitude } = pos.coords;
 
-        await setDoc(doc(db, "classrooms", classCode, "sessions", newSessionId), {
-          classCode,
-          sessionId: newSessionId,
-          type: "qr",
-          status: "active",
-          startedAt: serverTimestamp(),
-          teacherLat: latitude,
-          teacherLng: longitude,
-        });
+        await setDoc(
+          doc(db, "classrooms", classCode, "sessions", newSessionId),
+          {
+            classCode,
+            sessionId: newSessionId,
+            type: "qr",
+            status: "active",
+            startedAt: serverTimestamp(),
+            teacherLat: latitude,
+            teacherLng: longitude,
+          },
+        );
 
         generateQr(`${classCode}|${newSessionId}`);
         setQrActive(true);
       },
       async () => {
-        await setDoc(doc(db, "classrooms", classCode, "sessions", newSessionId), {
-          classCode,
-          sessionId: newSessionId,
-          type: "qr",
-          status: "active",
-          startedAt: serverTimestamp(),
-          teacherLat: null,
-          teacherLng: null,
-        });
+        await setDoc(
+          doc(db, "classrooms", classCode, "sessions", newSessionId),
+          {
+            classCode,
+            sessionId: newSessionId,
+            type: "qr",
+            status: "active",
+            startedAt: serverTimestamp(),
+            teacherLat: null,
+            teacherLng: null,
+          },
+        );
 
         generateQr(`${classCode}|${newSessionId}`);
         setQrActive(true);
-      }
+      },
     );
   };
 
@@ -91,7 +98,7 @@ const QrAttendance = () => {
         "classrooms",
         classCode,
         "sessions",
-        sessionId
+        sessionId,
       );
 
       const pendingRef = collection(
@@ -100,7 +107,7 @@ const QrAttendance = () => {
         classCode,
         "sessions",
         sessionId,
-        "pending"
+        "pending",
       );
 
       const pendingSnap = await getDocs(pendingRef);
@@ -110,7 +117,7 @@ const QrAttendance = () => {
         "attendance",
         classCode,
         "sessions",
-        sessionId
+        sessionId,
       );
 
       // Save session metadata
@@ -120,7 +127,7 @@ const QrAttendance = () => {
           sessionId,
           endedAt: serverTimestamp(),
         },
-        { merge: true }
+        { merge: true },
       );
 
       const studentsColRef = collection(historySessionRef, "students");
@@ -128,6 +135,15 @@ const QrAttendance = () => {
       // Move pending -> attendance history
       for (const p of pendingSnap.docs) {
         const data = p.data();
+        const lastSeen = data.lastSeen?.seconds;
+
+        if (!lastSeen) continue;
+
+        const now = Math.floor(Date.now() / 1000);
+
+        if (now - lastSeen > HEARTBEAT_LIMIT) {
+          continue;
+        }
 
         await setDoc(doc(studentsColRef, p.id), {
           uid: p.id,
@@ -151,10 +167,7 @@ const QrAttendance = () => {
 
       setQrActive(false);
 
-      showAlert(
-        "Session stopped and attendance saved!",
-        "success"
-      );
+      showAlert("Session stopped and attendance saved!", "success");
     } catch (error) {
       showAlert("Failed to stop session!", "error");
       console.log(error);
@@ -181,7 +194,7 @@ const QrAttendance = () => {
               await stopQrSession();
               navigate(-1);
             },
-            "Yes"
+            "Yes",
           );
         }}
         className="fixed top-24 left-5 flex items-center gap-2 px-4 py-2 bg-input border-theme rounded-lg hover:brightness-90 transition cursor-pointer z-10"
@@ -227,7 +240,7 @@ const QrAttendance = () => {
                   async () => {
                     await stopQrSession();
                   },
-                  "Stop"
+                  "Stop",
                 )
               }
               className="px-4 py-2 rounded-lg font-medium text-white bg-purple-600 hover:brightness-90 transition cursor-pointer"

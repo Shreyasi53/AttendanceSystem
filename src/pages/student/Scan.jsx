@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import {
   doc,
@@ -42,6 +42,8 @@ export default function Scan() {
   const [scanned, setScanned] = useState(false);
 
   const [pendingPath, setPendingPath] = useState(null);
+
+  const heartbeatIntervalRef = useRef(null);
 
   const messages = [
     "Wait for teacher...",
@@ -93,22 +95,30 @@ export default function Scan() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [waiting]);
 
-  // 🔥 HEARTBEAT SYSTEM
-  useEffect(() => {
-    if (!waiting || !pendingPath) return;
+  // Start Heartbeat
+  const startHeartbeat = (pendingRef) => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+    }
 
-    const interval = setInterval(async () => {
+    heartbeatIntervalRef.current = setInterval(async () => {
       try {
-        await updateDoc(pendingPath, {
+        await updateDoc(pendingRef, {
           lastSeen: serverTimestamp(),
         });
       } catch (err) {
         console.log("Heartbeat failed:", err);
       }
     }, 3000);
+  };
 
-    return () => clearInterval(interval);
-  }, [waiting, pendingPath]);
+  // Stop Heartbeat
+  const stopHeartbeat = () => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+    }
+  };
 
   useEffect(() => {
     const html5QrCode = new Html5Qrcode(qrRegionId);
@@ -174,6 +184,8 @@ export default function Scan() {
       try {
         html5QrCode.stop();
       } catch {}
+
+      stopHeartbeat();
     };
   }, []);
 
@@ -266,13 +278,17 @@ export default function Scan() {
           rollNo: student?.rollNo || "N/A",
           location: studentLoc,
           joinedAt: serverTimestamp(),
-          lastSeen: serverTimestamp(), // 🔥 heartbeat start
+          lastSeen: serverTimestamp(),
           status: "waiting",
         });
 
-        setPendingPath(pendingRef); // 🔥 save reference for heartbeat
+        setPendingPath(pendingRef);
 
         setWaiting(true);
+
+        // Start heartbeat immediately
+        startHeartbeat(pendingRef);
+
         waitForTeacherStop(sessionRef, pendingRef);
       },
       () => showAlert("Location required!", "error")
@@ -286,6 +302,8 @@ export default function Scan() {
       const data = snap.data();
 
       if (data.status === "closed") {
+        stopHeartbeat();
+
         try {
           await deleteDoc(pendingRef);
         } catch {}
