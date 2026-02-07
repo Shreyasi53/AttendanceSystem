@@ -7,12 +7,13 @@ import {
   deleteDoc,
   onSnapshot,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
 
-const MAX_DISTANCE = 300; // meters allowed
+const MAX_DISTANCE = 300;
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
@@ -39,6 +40,8 @@ export default function Scan() {
 
   const [waiting, setWaiting] = useState(false);
   const [scanned, setScanned] = useState(false);
+
+  const [pendingPath, setPendingPath] = useState(null);
 
   const messages = [
     "Wait for teacher...",
@@ -90,6 +93,23 @@ export default function Scan() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [waiting]);
 
+  // 🔥 HEARTBEAT SYSTEM
+  useEffect(() => {
+    if (!waiting || !pendingPath) return;
+
+    const interval = setInterval(async () => {
+      try {
+        await updateDoc(pendingPath, {
+          lastSeen: serverTimestamp(),
+        });
+      } catch (err) {
+        console.log("Heartbeat failed:", err);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [waiting, pendingPath]);
+
   useEffect(() => {
     const html5QrCode = new Html5Qrcode(qrRegionId);
 
@@ -139,12 +159,15 @@ export default function Scan() {
           )
           .catch((err) => {
             console.error("CAMERA START FAILED:", err);
-            showAlert("Camera failed to start. Allow camera permissions & retry.");
+            showAlert(
+              "Camera failed to start. Allow camera permissions & retry.",
+              "error"
+            );
           });
       })
       .catch((err) => {
         console.error("CAMERA FETCH ERROR:", err);
-        showAlert("No camera found on this device.");
+        showAlert("No camera found on this device.", "error");
       });
 
     return () => {
@@ -243,8 +266,11 @@ export default function Scan() {
           rollNo: student?.rollNo || "N/A",
           location: studentLoc,
           joinedAt: serverTimestamp(),
+          lastSeen: serverTimestamp(), // 🔥 heartbeat start
           status: "waiting",
         });
+
+        setPendingPath(pendingRef); // 🔥 save reference for heartbeat
 
         setWaiting(true);
         waitForTeacherStop(sessionRef, pendingRef);
@@ -271,21 +297,30 @@ export default function Scan() {
   };
 
   return (
-    <div className="min-h-screen p-4 flex flex-col items-center bg-black text-white">
+    <div
+      className="min-h-screen p-4 flex flex-col items-center"
+      style={{
+        background: "var(--color-bg)",
+        color: "var(--color-text)",
+      }}
+    >
       <h1 className="text-xl font-semibold mb-3">Scan QR Attendance</h1>
 
       <div
         id="qr-reader"
+        className="border-theme rounded-xl overflow-hidden"
         style={{
           width: "100%",
           maxWidth: "400px",
           margin: "0 auto",
-          borderRadius: "8px",
         }}
       ></div>
 
       {waiting && (
-        <p className="mt-3 text-yellow-400 font-medium text-center">
+        <p
+          className="mt-4 font-medium text-center px-4 py-2 rounded-lg border-theme bg-card"
+          style={{ color: "var(--color-primary)" }}
+        >
           {waitMsg}
         </p>
       )}
