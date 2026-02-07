@@ -13,8 +13,8 @@ import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
 
-const MAX_DISTANCE = 200;
-const MAX_ACCURACY = 150;
+const MAX_DISTANCE = 80; // recommended for classroom
+const MAX_ACCURACY = 200; // allow indoor GPS
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
@@ -128,14 +128,14 @@ export default function Scan() {
           (d) =>
             d.label.toLowerCase().includes("back") ||
             d.label.toLowerCase().includes("rear") ||
-            d.label.toLowerCase().includes("environment"),
+            d.label.toLowerCase().includes("environment")
         );
 
         if (!backCam) {
           backCam = devices.find(
             (d) =>
               !d.label.toLowerCase().includes("wide") &&
-              !d.label.toLowerCase().includes("depth"),
+              !d.label.toLowerCase().includes("depth")
           );
         }
 
@@ -164,13 +164,13 @@ export default function Scan() {
             },
             (scanErr) => {
               console.warn("SCAN ERROR:", scanErr);
-            },
+            }
           )
           .catch((err) => {
             console.error("CAMERA START FAILED:", err);
             showAlert(
               "Camera failed to start. Allow camera permissions & retry.",
-              "error",
+              "error"
             );
           });
       })
@@ -211,7 +211,7 @@ export default function Scan() {
           "classrooms",
           classCode,
           "sessions",
-          sessionId,
+          sessionId
         );
 
         const snap = await getDoc(sessionRef);
@@ -228,25 +228,27 @@ export default function Scan() {
           return;
         }
 
-        // Distance Check
+        // Distance + Accuracy Check
         if (sessionData.teacherLat && sessionData.teacherLng) {
           const dist = getDistance(
             studentLoc.lat,
             studentLoc.lng,
             sessionData.teacherLat,
-            sessionData.teacherLng,
+            sessionData.teacherLng
           );
+
           const accuracy = pos.coords.accuracy;
+          const allowedDistance = MAX_DISTANCE + accuracy;
 
           if (accuracy > MAX_ACCURACY) {
             showAlert(
-              "GPS accuracy is too low. Move near window / enable high accuracy.",
-              "error",
+              "GPS accuracy too low. Turn on High Accuracy GPS / move near window.",
+              "error"
             );
             return;
           }
 
-          if (dist > MAX_DISTANCE) {
+          if (dist > allowedDistance) {
             showAlert("You are too far from classroom!", "error");
             return;
           }
@@ -258,7 +260,7 @@ export default function Scan() {
           "classrooms",
           classCode,
           "students",
-          user.uid,
+          user.uid
         );
 
         const studentSnap = await getDoc(studentRef);
@@ -277,7 +279,7 @@ export default function Scan() {
           "sessions",
           sessionId,
           "pending",
-          user.uid,
+          user.uid
         );
 
         await setDoc(pendingRef, {
@@ -290,8 +292,6 @@ export default function Scan() {
           status: "waiting",
         });
 
-        setPendingPath(pendingRef);
-
         setWaiting(true);
 
         // Start heartbeat immediately
@@ -299,7 +299,7 @@ export default function Scan() {
 
         waitForTeacherStop(sessionRef, pendingRef);
       },
-      () => showAlert("Location required!", "error"),
+      () => showAlert("Location required!", "error")
     );
   };
 
@@ -334,7 +334,7 @@ export default function Scan() {
 
       <div
         id="qr-reader"
-        className="border-theme rounded-xl overflow-hidden"
+        className="border-theme rounded-xl overflow-hidden bg-card"
         style={{
           width: "100%",
           maxWidth: "400px",
