@@ -58,7 +58,7 @@ const ClassroomDetail = () => {
         fetchStudents();
         showAlert("Student removed from class.", "success");
       },
-      "Remove"
+      "Remove",
     );
   };
 
@@ -91,10 +91,8 @@ const ClassroomDetail = () => {
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
         {/* LEFT SIDE */}
         <div className="lg:col-span-1 space-y-6">
-
           {/* Class Details */}
           <div className="bg-card border-theme rounded-2xl p-6 space-y-2 shadow-sm">
             <p>
@@ -103,7 +101,8 @@ const ClassroomDetail = () => {
             </p>
 
             <p>
-              <span className="font-semibold">Subject:</span> {classInfo.subject}
+              <span className="font-semibold">Subject:</span>{" "}
+              {classInfo.subject}
             </p>
 
             <p>
@@ -117,17 +116,17 @@ const ClassroomDetail = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => setShowAttendancePopup(true)}
-              className="btn-primary h-11 px-5 rounded-lg cursor-pointer"
+              className="btn-primary h-11 w-full sm:w-auto px-5 rounded-lg cursor-pointer"
             >
               Take Attendance
             </button>
 
             <button
               onClick={() => navigate(`/teacher/class/${classCode}/history`)}
-              className="h-11 px-5 rounded-lg bg-card border-theme hover:opacity-80 transition cursor-pointer"
+              className="h-11 w-full sm:w-auto px-5 rounded-lg bg-card border-theme hover:opacity-80 transition cursor-pointer"
             >
               View Attendance
             </button>

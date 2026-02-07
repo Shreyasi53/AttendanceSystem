@@ -103,7 +103,7 @@ const AuthForm = () => {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-start mt-30 px-4"
+      className="min-h-screen flex flex-col items-center justify-start mt-28 px-4"
       style={{ background: "var(--color-bg)", color: "var(--color-text)" }}
     >
       <div

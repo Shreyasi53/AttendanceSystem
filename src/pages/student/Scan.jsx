@@ -12,26 +12,84 @@ import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
 
+const MAX_DISTANCE = 300; // meters allowed 
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const toRad = (x) => (x * Math.PI) / 180;
 
-const MAX_DISTANCE = 300; // meters allowed (just adjust later)
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export default function Scan() {
   const navigate = useNavigate();
   const user = auth.currentUser;
   const { showAlert } = useAlert();
+  
   const [waiting, setWaiting] = useState(false);
   const [scanned, setScanned] = useState(false);
-
+  const [waitMsg, setWaitMsg] = useState(messages[0]);
   const qrRegionId = "qr-reader";
+  const messages = [
+    "Wait for teacher...",
+    "Teacher is calculating attendance...",
+    "Don't close this tab...",
+    "Teacher is busy, please wait...",
+    "Verifying your attendance...",
+    "Almost done... stay here!",
+  ];
+//Random waiting messages 
+  useEffect(() => {
+    if (!waiting) return;
+
+    const interval = setInterval(() => {
+      setWaitMsg(messages[Math.floor(Math.random() * messages.length)]);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [waiting]);
+ //warn if student switches tab or tries to close
+  useEffect(()=>{
+    const handleVisibility = () => {
+      if(document.hidden && waiting){
+        showAlert("Don't switch tabs! Attendance may be cancelled!", "error");
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  },[waiting])
+  //warn if student close the tab
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (waiting) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [waiting]);
 
   useEffect(() => {
     const html5QrCode = new Html5Qrcode(qrRegionId);
 
     Html5Qrcode.getCameras()
       .then((devices) => {
-        console.log("CAMERAS FOUND:", devices);
-
-        // Try to pick back camera
         let backCam = devices.find(
           (d) =>
             d.label.toLowerCase().includes("back") ||
@@ -47,13 +105,9 @@ export default function Scan() {
               !d.label.toLowerCase().includes("depth"),
           );
         }
-
-        // Final fallback
         if (!backCam) backCam = devices[devices.length - 1];
 
         const cameraId = backCam.id;
-        console.log("USING CAMERA:", cameraId, backCam.label);
-
         html5QrCode
           .start(
             cameraId,
@@ -79,7 +133,9 @@ export default function Scan() {
           )
           .catch((err) => {
             console.error("CAMERA START FAILED:", err);
-            showAlert("Camera failed to start. Allow camera permissions & retry.");
+            showAlert(
+              "Camera failed to start. Allow camera permissions & retry.",
+            );
           });
       })
       .catch((err) => {
@@ -100,6 +156,11 @@ export default function Scan() {
   };
 
   const verifyScan = async (classCode, sessionId) => {
+    if(!user){
+      showAlert("Login required!", "error");
+      return navigate("/login");
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const studentLoc = {
@@ -116,10 +177,32 @@ export default function Scan() {
         );
 
         const snap = await getDoc(sessionRef);
-        if (!snap.exists()) return showAlert("Invalid Session!");
-        if (snap.data().status !== "active") return showAlert("Session Closed!");
 
-        // === fetch student info ===
+        if (!snap.exists()){
+           showAlert("Invalid Session!", "error");
+           return;
+        }
+
+        const sessionData = snap.data();
+        if (sessionData.status !== "active") {
+          showAlert("Session Closed!", "error");
+          return;
+        }
+         // Distance Check
+        if (sessionData.teacherLat && sessionData.teacherLng) {
+          const dist = getDistance(
+            studentLoc.lat,
+            studentLoc.lng,
+            sessionData.teacherLat,
+            sessionData.teacherLng
+          );
+
+          if (dist > MAX_DISTANCE) {
+            showAlert("You are too far from classroom!", "error");
+            return;
+          }
+        }
+        //student must be join check
         const studentRef = doc(
           db,
           "classrooms",
@@ -128,6 +211,11 @@ export default function Scan() {
           user.uid,
         );
         const studentSnap = await getDoc(studentRef);
+        if (!studentSnap.exists()) {
+          showAlert("You are not joined in this classroom!", "error");
+          return;
+        }
+
         const student = studentSnap.data();
 
         const pendingRef = doc(
@@ -152,7 +240,7 @@ export default function Scan() {
         setWaiting(true);
         waitForTeacherStop(sessionRef, pendingRef);
       },
-      () => showAlert("Location required!"),
+      () => showAlert("Location required!", "error")
     );
   };
 
@@ -166,14 +254,14 @@ export default function Scan() {
         try {
           await deleteDoc(pendingRef);
         } catch {}
-        showAlert("Attendance Recorded!");
+        showAlert("Attendance Recorded!", "success");
         navigate(-1);
       }
     });
   };
 
   return (
-    <div className="min-h-screen p-4 flex flex-col items-center bg-black text-white">
+    <div className="min-h-screen p-4 flex flex-col items-center var(--bg-secondary) rounded-lg">
       <h1 className="text-xl font-semibold mb-3">Scan QR Attendance</h1>
 
       <div
@@ -188,7 +276,7 @@ export default function Scan() {
 
       {waiting && (
         <p className="mt-3 text-yellow-400 font-medium text-center">
-          Waiting for teacher...
+          {waitMsg}
         </p>
       )}
     </div>
