@@ -12,18 +12,12 @@ import {
 import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
-import scanSound from "../../assets/beep.mp3"; // ✅ keep mp3 inside src/assets
-
-const playSound = () => {
-  const audio = new Audio(scanSound);
-  audio.play();
-};
 
 const MAX_DISTANCE = 80;
 const MAX_ACCURACY = 200;
 
-const LEAVE_LIMIT = 3; // ✅ if student leaves for >3 sec => marked left
-const HEARTBEAT_INTERVAL = 2000; // ✅ heartbeat every 2 sec
+const LEAVE_LIMIT = 3; // seconds allowed outside tab before absent
+const HEARTBEAT_INTERVAL = 3000; // 3 sec
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
@@ -42,6 +36,13 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
+// 🔥 Vibrate function
+const vibratePhone = () => {
+  if (navigator.vibrate) {
+    navigator.vibrate([200, 100, 200]); // vibrate-pause-vibrate
+  }
+};
 
 export default function Scan() {
   const navigate = useNavigate();
@@ -105,7 +106,7 @@ export default function Scan() {
     }
   };
 
-  // Strict anti cheat
+  // 🔥 STRICT ANTI CHEAT: leaving tab/app logic
   useEffect(() => {
     if (!waiting || !pendingPath) return;
 
@@ -115,7 +116,9 @@ export default function Scan() {
           status: "paused",
           pausedAt: serverTimestamp(),
         });
-      } catch {}
+      } catch (err) {
+        console.log("Failed to mark paused:", err);
+      }
     };
 
     const markLeft = async () => {
@@ -124,22 +127,21 @@ export default function Scan() {
           status: "left",
           leftAt: serverTimestamp(),
         });
-      } catch {}
+      } catch (err) {
+        console.log("Failed to mark left:", err);
+      }
     };
 
     const handleVisibilityChange = async () => {
       if (document.hidden) {
-        // ✅ stop heartbeat instantly when student leaves
-        stopHeartbeat();
-
         await markPaused();
 
-        // start timer to mark left
+        // Start timer
         leaveTimeoutRef.current = setTimeout(async () => {
           await markLeft();
         }, LEAVE_LIMIT * 1000);
       } else {
-        // student came back
+        // Cancel timer if student returns
         if (leaveTimeoutRef.current) {
           clearTimeout(leaveTimeoutRef.current);
           leaveTimeoutRef.current = null;
@@ -151,9 +153,6 @@ export default function Scan() {
             backAt: serverTimestamp(),
           });
         } catch {}
-
-        // ✅ restart heartbeat when student returns
-        startHeartbeat(pendingPath);
       }
     };
 
@@ -177,6 +176,7 @@ export default function Scan() {
     };
   }, [waiting, pendingPath]);
 
+  // QR Scanner
   useEffect(() => {
     const html5QrCode = new Html5Qrcode(qrRegionId);
 
@@ -218,7 +218,8 @@ export default function Scan() {
                 setScanned(true);
                 html5QrCode.stop();
 
-                playSound(); // ✅ sound when scan successful
+                // ✅ Vibrate on successful scan
+                vibratePhone();
 
                 handleScan(decodedText);
               }
@@ -365,9 +366,10 @@ export default function Scan() {
 
         setPendingPath(pendingRef);
 
-        setWaitMsg("Waiting for teacher...");
+        setWaiting(true);
+        setWaitMsg("Attendance request sent. Please wait...");
 
-        // start heartbeat
+        // Start heartbeat immediately
         startHeartbeat(pendingRef);
 
         waitForTeacherStop(sessionRef, pendingRef);
