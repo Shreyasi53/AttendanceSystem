@@ -12,12 +12,18 @@ import {
 import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
+import scanSound from "../../assets/beep.mp3"; // ✅ keep mp3 inside src/assets
+
+const playSound = () => {
+  const audio = new Audio(scanSound);
+  audio.play();
+};
 
 const MAX_DISTANCE = 80;
 const MAX_ACCURACY = 200;
 
-const LEAVE_LIMIT = 5; // seconds allowed outside tab before absent
-const HEARTBEAT_INTERVAL = 3000; // 3 sec
+const LEAVE_LIMIT = 3; // ✅ if student leaves for >3 sec => marked left
+const HEARTBEAT_INTERVAL = 2000; // ✅ heartbeat every 2 sec
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
@@ -99,7 +105,7 @@ export default function Scan() {
     }
   };
 
-  // Anti-cheat: if student leaves tab/app for more than LEAVE_LIMIT seconds => mark left
+  // Strict anti cheat
   useEffect(() => {
     if (!waiting || !pendingPath) return;
 
@@ -109,9 +115,7 @@ export default function Scan() {
           status: "paused",
           pausedAt: serverTimestamp(),
         });
-      } catch (err) {
-        console.log("Failed to mark paused:", err);
-      }
+      } catch {}
     };
 
     const markLeft = async () => {
@@ -120,21 +124,22 @@ export default function Scan() {
           status: "left",
           leftAt: serverTimestamp(),
         });
-      } catch (err) {
-        console.log("Failed to mark left:", err);
-      }
+      } catch {}
     };
 
     const handleVisibilityChange = async () => {
       if (document.hidden) {
+        // ✅ stop heartbeat instantly when student leaves
+        stopHeartbeat();
+
         await markPaused();
 
-        // start leave timer
+        // start timer to mark left
         leaveTimeoutRef.current = setTimeout(async () => {
           await markLeft();
         }, LEAVE_LIMIT * 1000);
       } else {
-        // if student comes back, cancel absent timer
+        // student came back
         if (leaveTimeoutRef.current) {
           clearTimeout(leaveTimeoutRef.current);
           leaveTimeoutRef.current = null;
@@ -146,6 +151,9 @@ export default function Scan() {
             backAt: serverTimestamp(),
           });
         } catch {}
+
+        // ✅ restart heartbeat when student returns
+        startHeartbeat(pendingPath);
       }
     };
 
@@ -178,14 +186,14 @@ export default function Scan() {
           (d) =>
             d.label.toLowerCase().includes("back") ||
             d.label.toLowerCase().includes("rear") ||
-            d.label.toLowerCase().includes("environment"),
+            d.label.toLowerCase().includes("environment")
         );
 
         if (!backCam) {
           backCam = devices.find(
             (d) =>
               !d.label.toLowerCase().includes("wide") &&
-              !d.label.toLowerCase().includes("depth"),
+              !d.label.toLowerCase().includes("depth")
           );
         }
 
@@ -209,18 +217,21 @@ export default function Scan() {
               if (!scanned && !waiting) {
                 setScanned(true);
                 html5QrCode.stop();
+
+                playSound(); // ✅ sound when scan successful
+
                 handleScan(decodedText);
               }
             },
             (scanErr) => {
               console.warn("SCAN ERROR:", scanErr);
-            },
+            }
           )
           .catch((err) => {
             console.error("CAMERA START FAILED:", err);
             showAlert(
               "Camera failed to start. Allow camera permissions & retry.",
-              "error",
+              "error"
             );
           });
       })
@@ -246,8 +257,10 @@ export default function Scan() {
   const verifyScan = async (classCode, sessionId) => {
     if (!user) {
       showAlert("Login required!", "error");
+      navigate(-1);
       return;
     }
+
     // show waiting instantly
     setWaiting(true);
     setWaitMsg("Verifying your location...");
@@ -264,12 +277,14 @@ export default function Scan() {
           "classrooms",
           classCode,
           "sessions",
-          sessionId,
+          sessionId
         );
+
         const snap = await getDoc(sessionRef);
 
         if (!snap.exists()) {
           showAlert("Invalid Session!", "error");
+          navigate(-1);
           return;
         }
 
@@ -277,6 +292,7 @@ export default function Scan() {
 
         if (sessionData.status !== "active") {
           showAlert("Session Closed!", "error");
+          navigate(-1);
           return;
         }
 
@@ -286,7 +302,7 @@ export default function Scan() {
             studentLoc.lat,
             studentLoc.lng,
             sessionData.teacherLat,
-            sessionData.teacherLng,
+            sessionData.teacherLng
           );
 
           const accuracy = pos.coords.accuracy;
@@ -295,13 +311,15 @@ export default function Scan() {
           if (accuracy > MAX_ACCURACY) {
             showAlert(
               "GPS accuracy too low. Turn on High Accuracy GPS / move near window.",
-              "error",
+              "error"
             );
+            navigate(-1);
             return;
           }
 
           if (dist > allowedDistance) {
             showAlert("You are too far from classroom!", "error");
+            navigate(-1);
             return;
           }
         }
@@ -312,12 +330,14 @@ export default function Scan() {
           "classrooms",
           classCode,
           "students",
-          user.uid,
+          user.uid
         );
+
         const studentSnap = await getDoc(studentRef);
 
         if (!studentSnap.exists()) {
           showAlert("You are not joined in this classroom!", "error");
+          navigate(-1);
           return;
         }
 
@@ -330,7 +350,7 @@ export default function Scan() {
           "sessions",
           sessionId,
           "pending",
-          user.uid,
+          user.uid
         );
 
         await setDoc(pendingRef, {
@@ -344,13 +364,18 @@ export default function Scan() {
         });
 
         setPendingPath(pendingRef);
-        setWaiting(true);
 
+        setWaitMsg("Waiting for teacher...");
+
+        // start heartbeat
         startHeartbeat(pendingRef);
 
         waitForTeacherStop(sessionRef, pendingRef);
       },
-      () => showAlert("Location required!", "error"),
+      () => {
+        showAlert("Location required!", "error");
+        navigate(-1);
+      }
     );
   };
 
