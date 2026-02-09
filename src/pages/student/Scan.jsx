@@ -233,11 +233,13 @@ export default function Scan() {
               "Camera failed to start. Allow camera permissions & retry.",
               "error",
             );
+            navigate(-1);
           });
       })
       .catch((err) => {
         console.error("CAMERA FETCH ERROR:", err);
         showAlert("No camera found on this device.", "error");
+        navigate(-1);
       });
 
     return () => {

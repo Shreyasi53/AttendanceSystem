@@ -22,7 +22,7 @@ const QrAttendance = () => {
 
   const { showAlert, showConfirm } = useAlert();
   const navigate = useNavigate();
-  const HEARTBEAT_LIMIT = 7; // seconds
+  const HEARTBEAT_LIMIT = 5; // seconds
 
   const generateSessionId = () =>
     "SESSION_" + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -170,6 +170,7 @@ const QrAttendance = () => {
       setQrActive(false);
 
       showAlert("Session stopped and attendance saved!", "success");
+      
     } catch (error) {
       showAlert("Failed to stop session!", "error");
       console.log(error);
@@ -240,6 +241,7 @@ const QrAttendance = () => {
                   "Are you sure you want to stop attendance?",
                   async () => {
                     await stopQrSession();
+                    navigate("/teacher/dashboard");
                   },
                   "Stop",
                 )
@@ -250,10 +252,7 @@ const QrAttendance = () => {
             </button>
           </div>
         )}
-
-        {!qrActive && sessionId && (
-          <p className="text-red-400 font-medium">QR Attendance Ended!</p>
-        )}
+        
       </div>
     </div>
   );
