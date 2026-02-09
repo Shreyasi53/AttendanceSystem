@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
+import beepSound from "../../assets/beep.mp3";
 import {
   doc,
   setDoc,
@@ -37,11 +38,9 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// 🔥 Vibrate function
-const vibratePhone = () => {
-  if (navigator.vibrate) {
-    navigator.vibrate([200, 100, 200]); // vibrate-pause-vibrate
-  }
+const playBeep = () => {
+  const audio = new Audio(beepSound);
+  audio.play().catch((err) => console.log("Beep blocked:", err));
 };
 
 export default function Scan() {
@@ -186,14 +185,14 @@ export default function Scan() {
           (d) =>
             d.label.toLowerCase().includes("back") ||
             d.label.toLowerCase().includes("rear") ||
-            d.label.toLowerCase().includes("environment")
+            d.label.toLowerCase().includes("environment"),
         );
 
         if (!backCam) {
           backCam = devices.find(
             (d) =>
               !d.label.toLowerCase().includes("wide") &&
-              !d.label.toLowerCase().includes("depth")
+              !d.label.toLowerCase().includes("depth"),
           );
         }
 
@@ -218,21 +217,21 @@ export default function Scan() {
                 setScanned(true);
                 html5QrCode.stop();
 
-                // ✅ Vibrate on successful scan
-                vibratePhone();
+                // ✅ Beep sound on successful scan
+                playBeep();
 
                 handleScan(decodedText);
               }
             },
             (scanErr) => {
               console.warn("SCAN ERROR:", scanErr);
-            }
+            },
           )
           .catch((err) => {
             console.error("CAMERA START FAILED:", err);
             showAlert(
               "Camera failed to start. Allow camera permissions & retry.",
-              "error"
+              "error",
             );
           });
       })
@@ -278,7 +277,7 @@ export default function Scan() {
           "classrooms",
           classCode,
           "sessions",
-          sessionId
+          sessionId,
         );
 
         const snap = await getDoc(sessionRef);
@@ -303,7 +302,7 @@ export default function Scan() {
             studentLoc.lat,
             studentLoc.lng,
             sessionData.teacherLat,
-            sessionData.teacherLng
+            sessionData.teacherLng,
           );
 
           const accuracy = pos.coords.accuracy;
@@ -312,7 +311,7 @@ export default function Scan() {
           if (accuracy > MAX_ACCURACY) {
             showAlert(
               "GPS accuracy too low. Turn on High Accuracy GPS / move near window.",
-              "error"
+              "error",
             );
             navigate(-1);
             return;
@@ -331,7 +330,7 @@ export default function Scan() {
           "classrooms",
           classCode,
           "students",
-          user.uid
+          user.uid,
         );
 
         const studentSnap = await getDoc(studentRef);
@@ -351,7 +350,7 @@ export default function Scan() {
           "sessions",
           sessionId,
           "pending",
-          user.uid
+          user.uid,
         );
 
         await setDoc(pendingRef, {
@@ -377,7 +376,7 @@ export default function Scan() {
       () => {
         showAlert("Location required!", "error");
         navigate(-1);
-      }
+      },
     );
   };
 
