@@ -108,25 +108,7 @@ export const AlertProvider = ({ children }) => {
       {modalAlert && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
           <div className="bg-card border-theme p-6 rounded-xl space-y-4 w-full max-w-sm shadow-xl">
-            <h2
-              className="text-lg font-semibold"
-              style={{
-                color:
-                  modalAlert.type === "success"
-                    ? "var(--color-success)"
-                    : modalAlert.type === "error"
-                      ? "var(--color-danger)"
-                      : "var(--color-primary)",
-              }}
-            >
-              {modalAlert.type === "success"
-                ? "Success"
-                : modalAlert.type === "error"
-                  ? "Error"
-                  : "Message"}
-            </h2>
-
-            <p className="text-sm text-muted leading-relaxed">
+          <p className="text-sm text-muted leading-relaxed">
               {modalAlert.message}
             </p>
 

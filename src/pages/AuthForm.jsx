@@ -95,12 +95,10 @@ const AuthForm = () => {
 
       // ❌ Block login if not verified
       if (!user.emailVerified) {
-        showModalAlert("Please verify your email first!", "error");
-
         await sendEmailVerification(user);
-        showAlert(
-          "Signup successful! Verification link sent. Please check Inbox / Spam / Promotions.",
-          "success",
+        showModalAlert(
+          "Your email is not verified yet.\n\nWe have sent the verification email again.\nPlease check Inbox, Spam and Promotions tab.",
+          "error",
         );
 
         return;
@@ -133,7 +131,7 @@ const AuthForm = () => {
         msg = "Invalid email format!";
       }
 
-      showAlert(msg, "error");
+      showModalAlert(msg, "error");
     }
   };
 
