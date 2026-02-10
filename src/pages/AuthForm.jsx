@@ -4,18 +4,20 @@ import { auth, db } from "../firebase/firebaseConfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { Eye, EyeOff } from "lucide-react";
 import { useAlert } from "../context/AlertContext";
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
 } from "firebase/auth";
 
 const AuthForm = () => {
-  const [mode, setMode] = useState("login"); 
+  const [mode, setMode] = useState("login");
   const sliderTransform =
     mode === "login" ? "translateX(0%)" : "translateX(100%)";
 
-  const { showAlert } = useAlert();
+  const { showAlert, showModalAlert } = useAlert();
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +49,7 @@ const AuthForm = () => {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
-        formData.password
+        formData.password,
       );
 
       const user = userCredential.user;
@@ -56,14 +58,21 @@ const AuthForm = () => {
         displayName: formData.name,
       });
 
+      // ✅ Send Email Verification Link
+      await sendEmailVerification(user);
+
       await setDoc(doc(db, "users", user.uid), {
         name: formData.name,
         email: formData.email,
         role: formData.role,
         uid: user.uid,
+        emailVerified: false,
       });
 
-      showAlert("Signup Successful!", "success");
+      showModalAlert(
+        "Signup successful! Verification email has been sent.\n\nPlease check Inbox, Spam and Promotions tab.",
+        "success",
+      );
 
       setMode("login");
     } catch (error) {
@@ -79,10 +88,23 @@ const AuthForm = () => {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         formData.email,
-        formData.password
+        formData.password,
       );
 
       const user = userCredential.user;
+
+      // ❌ Block login if not verified
+      if (!user.emailVerified) {
+        showModalAlert("Please verify your email first!", "error");
+
+        await sendEmailVerification(user);
+        showAlert(
+          "Signup successful! Verification link sent. Please check Inbox / Spam / Promotions.",
+          "success",
+        );
+
+        return;
+      }
 
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.data();
@@ -97,7 +119,21 @@ const AuthForm = () => {
         }
       }, 800);
     } catch (error) {
-      showAlert(error.message, "error");
+      let msg = "Login failed. Please try again.";
+
+      if (error.code === "auth/invalid-credential") {
+        msg = "Incorrect email or password!";
+      } else if (error.code === "auth/user-not-found") {
+        msg = "No account found with this email!";
+      } else if (error.code === "auth/wrong-password") {
+        msg = "Incorrect password!";
+      } else if (error.code === "auth/too-many-requests") {
+        msg = "Too many attempts. Please try again later!";
+      } else if (error.code === "auth/invalid-email") {
+        msg = "Invalid email format!";
+      }
+
+      showAlert(msg, "error");
     }
   };
 
@@ -112,29 +148,24 @@ const AuthForm = () => {
       >
         {/* Tabs */}
         <div className="relative flex border-theme rounded-full mb-6 bg-input overflow-hidden">
-          {/* LOGIN LEFT */}
           <button
             className={`flex-1 py-3 text-center font-semibold focus:outline-none z-10 transition ${
               mode === "login" ? "text-white" : "text-muted"
             }`}
             onClick={() => setMode("login")}
-            aria-pressed={mode === "login"}
           >
             Login
           </button>
 
-          {/* SIGNUP RIGHT */}
           <button
             className={`flex-1 py-3 text-center font-semibold focus:outline-none z-10 transition ${
               mode === "signup" ? "text-white" : "text-muted"
             }`}
             onClick={() => setMode("signup")}
-            aria-pressed={mode === "signup"}
           >
             Sign up
           </button>
 
-          {/* Slider */}
           <div
             aria-hidden
             className="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-full transition-transform duration-300"
@@ -145,7 +176,6 @@ const AuthForm = () => {
           />
         </div>
 
-        {/* Forms */}
         {mode === "login" ? (
           // LOGIN FORM
           <form className="space-y-5" onSubmit={handleLoginSubmit}>
@@ -188,7 +218,6 @@ const AuthForm = () => {
               Login
             </button>
 
-            {/* Added P tag */}
             <p className="text-sm text-muted text-center">
               Don&apos;t have an account?{" "}
               <span
@@ -268,7 +297,6 @@ const AuthForm = () => {
               Sign Up
             </button>
 
-            {/* Added P tag */}
             <p className="text-sm text-muted text-center">
               Already have an account?{" "}
               <span

@@ -8,6 +8,11 @@ export const AlertProvider = ({ children }) => {
     type: "success",
     open: false,
   });
+  const [modalAlert, setModalAlert] = useState(null);
+  const showModalAlert = (message, type = "info") => {
+    setModalAlert({ message, type });
+  };
+  const closeModalAlert = () => setModalAlert(null);
 
   const [confirm, setConfirm] = useState(null);
   const timeoutRef = useRef(null);
@@ -40,16 +45,18 @@ export const AlertProvider = ({ children }) => {
   const handleCancel = () => setConfirm(null);
 
   return (
-    <AlertContext.Provider value={{ showAlert, showConfirm }}>
+    <AlertContext.Provider
+      value={{ showAlert, showConfirm, showModalAlert, closeModalAlert }}
+    >
       {children}
 
       {/* Toast Alert */}
       {alert.open && (
-        <div className="fixed top-6 right-6 z-[999] animate-slideIn">
+        <div className="fixed top-6 right-6 z-999 animate-slideIn">
           <div
             className={`
               px-5 py-3 rounded-xl shadow-lg border flex items-start gap-3
-              bg-black/70 backdrop-blur-md text-white min-w-[260px]
+              bg-black/70 backdrop-blur-md text-white min-w-65
               ${alert.type === "success" ? "border-green-500/40" : ""}
               ${alert.type === "error" ? "border-red-500/40" : ""}
               ${alert.type === "info" ? "border-blue-500/40" : ""}
@@ -92,6 +99,43 @@ export const AlertProvider = ({ children }) => {
                 onClick={handleConfirm}
               >
                 {confirm.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal Alert */}
+      {modalAlert && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-card border-theme p-6 rounded-xl space-y-4 w-full max-w-sm shadow-xl">
+            <h2
+              className="text-lg font-semibold"
+              style={{
+                color:
+                  modalAlert.type === "success"
+                    ? "var(--color-success)"
+                    : modalAlert.type === "error"
+                      ? "var(--color-danger)"
+                      : "var(--color-primary)",
+              }}
+            >
+              {modalAlert.type === "success"
+                ? "Success"
+                : modalAlert.type === "error"
+                  ? "Error"
+                  : "Message"}
+            </h2>
+
+            <p className="text-sm text-muted leading-relaxed">
+              {modalAlert.message}
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                className="px-4 py-2 rounded-lg btn-primary"
+                onClick={closeModalAlert}
+              >
+                OK
               </button>
             </div>
           </div>
