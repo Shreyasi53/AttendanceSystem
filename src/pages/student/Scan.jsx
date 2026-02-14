@@ -17,8 +17,8 @@ import { useAlert } from "../../context/AlertContext";
 const MAX_DISTANCE = 80;
 const MAX_ACCURACY = 200;
 
-const LEAVE_LIMIT = 3; // seconds allowed outside tab before absent
-const HEARTBEAT_INTERVAL = 3000; // 3 sec
+const LEAVE_LIMIT = 1; // seconds allowed outside tab before absent
+const HEARTBEAT_INTERVAL = 1500; // 3 sec
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;

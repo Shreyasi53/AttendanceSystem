@@ -22,7 +22,7 @@ const QrAttendance = () => {
 
   const { showAlert, showConfirm } = useAlert();
   const navigate = useNavigate();
-  const HEARTBEAT_LIMIT = 5; // seconds
+  const HEARTBEAT_LIMIT = 3; // seconds
 
   const generateSessionId = () =>
     "SESSION_" + Math.random().toString(36).substring(2, 10).toUpperCase();
