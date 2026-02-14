@@ -13,7 +13,6 @@
     "@tailwindcss/vite": "^4.1.18",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
-    "file-saver": "^2.0.5",
     "firebase": "^12.9.0",
     "html5-qrcode": "^2.3.8",
     "jsqr": "^1.4.0",

@@ -5,7 +5,6 @@ import { db } from "../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 
 import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 import { useAlert } from "../../context/AlertContext";
 
 export default function AttendanceHistory() {
@@ -61,7 +60,7 @@ export default function AttendanceHistory() {
         return;
       }
 
-      // 2) Present students in that session
+      // 2) Present students
       const presentRef = collection(
         db,
         "attendance",
@@ -79,7 +78,7 @@ export default function AttendanceHistory() {
         presentMap[data.uid] = true;
       });
 
-      // 3) Create final list
+      // 3) Format final list
       allStudents.sort((a, b) => parseInt(a.rollNo) - parseInt(b.rollNo));
 
       const formatted = allStudents.map((s, index) => ({
@@ -89,22 +88,29 @@ export default function AttendanceHistory() {
         Status: presentMap[s.uid] ? "Present" : "Absent",
       }));
 
-      // 4) Excel creation
+      // 4) Create workbook
       const worksheet = XLSX.utils.json_to_sheet(formatted);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
 
-      const excelBuffer = XLSX.write(workbook, {
+      // 5) Convert to base64
+      const base64Excel = XLSX.write(workbook, {
         bookType: "xlsx",
-        type: "array",
+        type: "base64",
       });
 
-      const fileData = new Blob([excelBuffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
+      // 6) Create downloadable file
+      const fileName = `${sessionId}_attendance.xlsx`;
 
-      // 5) Download directly
-      saveAs(fileData, `${sessionId}_attendance.xlsx`);
+      const link = document.createElement("a");
+      link.href =
+        "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," +
+        base64Excel;
+
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       showAlert("Attendance Excel downloaded!", "success");
     } catch (err) {
