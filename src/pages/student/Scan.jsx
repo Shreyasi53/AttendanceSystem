@@ -12,6 +12,7 @@ import {
 import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
+import beepSound from "../../assets/beep.mp3";
 
 const MAX_DISTANCE = 80; // meters
 const MAX_ACCURACY = 200;
@@ -49,7 +50,29 @@ export default function Scan() {
   const heartbeatIntervalRef = useRef(null);
   const leaveTimeoutRef = useRef(null);
 
+  const messages = [
+    "Wait for teacher...",
+    "Teacher is calculating attendance...",
+    "Don't close this tab...",
+    "Teacher is busy, please wait...",
+    "Verifying your attendance...",
+    "Almost done... stay here!",
+  ];
+
+  const [waitMsg, setWaitMsg] = useState(messages[0]);
+
   const qrRegionId = "qr-reader";
+
+  // ✅ Random waiting message changer
+  useEffect(() => {
+    if (!waiting) return;
+
+    const interval = setInterval(() => {
+      setWaitMsg(messages[Math.floor(Math.random() * messages.length)]);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [waiting]);
 
   // Start Heartbeat
   const startHeartbeat = (pendingRef) => {
@@ -102,6 +125,11 @@ export default function Scan() {
     const handleVisibilityChange = async () => {
       if (document.hidden) {
         await markPaused();
+
+        // ✅ clear previous timer (important fix)
+        if (leaveTimeoutRef.current) {
+          clearTimeout(leaveTimeoutRef.current);
+        }
 
         // Start strict timer (2 sec)
         leaveTimeoutRef.current = setTimeout(async () => {
@@ -170,6 +198,10 @@ export default function Scan() {
               if (!scanned && !waiting) {
                 setScanned(true);
                 html5QrCode.stop();
+
+                // ✅ Beep sound
+                new Audio(beepSound).play().catch(() => {});
+
                 handleScan(decodedText);
               }
             },
@@ -193,6 +225,7 @@ export default function Scan() {
       try {
         html5QrCode.stop();
       } catch {}
+
       stopHeartbeat();
     };
   }, []);
@@ -382,7 +415,7 @@ export default function Scan() {
           className="mt-4 font-medium text-center px-4 py-2 rounded-lg border-theme bg-card"
           style={{ color: "var(--color-primary)" }}
         >
-          Don’t close app/tab! Attendance verifying...
+          {waitMsg}
         </p>
       )}
     </div>
