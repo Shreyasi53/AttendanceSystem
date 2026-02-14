@@ -17,8 +17,8 @@ export default function AttendanceHistory() {
 
   useEffect(() => {
     const load = async () => {
-      const ref = collection(db, "attendance", classCode, "sessions");
-      const snap = await getDocs(ref);
+      const refData = collection(db, "attendance", classCode, "sessions");
+      const snap = await getDocs(refData);
 
       let result = [];
       snap.forEach((d) => {
@@ -28,25 +28,26 @@ export default function AttendanceHistory() {
         });
       });
 
-      // sort by time (latest first)
       result.sort(
-        (a, b) => (b.endedAt?.seconds || 0) - (a.endedAt?.seconds || 0),
+        (a, b) => (b.endedAt?.seconds || 0) - (a.endedAt?.seconds || 0)
       );
 
       setSessions(result);
     };
 
     load();
-  }, []);
+  }, [classCode]);
 
   const downloadExcel = async (sessionId) => {
     try {
+      showAlert("Preparing Excel file...", "info");
+
       // 1) All class students
       const classStudentsRef = collection(
         db,
         "classrooms",
         classCode,
-        "students",
+        "students"
       );
       const classSnap = await getDocs(classStudentsRef);
 
@@ -56,7 +57,7 @@ export default function AttendanceHistory() {
       });
 
       if (allStudents.length === 0) {
-        showAlert("No students found in classroom!", "info");
+        showAlert("No students found in classroom!", "error");
         return;
       }
 
@@ -67,7 +68,7 @@ export default function AttendanceHistory() {
         classCode,
         "sessions",
         sessionId,
-        "students",
+        "students"
       );
 
       const presentSnap = await getDocs(presentRef);
@@ -78,7 +79,7 @@ export default function AttendanceHistory() {
         presentMap[data.uid] = true;
       });
 
-      // 3) Create final list (Present/Absent)
+      // 3) Create final list
       allStudents.sort((a, b) => parseInt(a.rollNo) - parseInt(b.rollNo));
 
       const formatted = allStudents.map((s, index) => ({
@@ -88,7 +89,7 @@ export default function AttendanceHistory() {
         Status: presentMap[s.uid] ? "Present" : "Absent",
       }));
 
-      // Excel creation
+      // 4) Excel creation
       const worksheet = XLSX.utils.json_to_sheet(formatted);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
@@ -102,9 +103,10 @@ export default function AttendanceHistory() {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
+      // 5) Download directly
       saveAs(fileData, `${sessionId}_attendance.xlsx`);
 
-      showAlert("Full attendance sheet downloaded!", "success");
+      showAlert("Attendance Excel downloaded!", "success");
     } catch (err) {
       console.log(err);
       showAlert("Failed to download excel!", "error");
