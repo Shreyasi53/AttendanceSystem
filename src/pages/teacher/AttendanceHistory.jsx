@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Download } from "lucide-react";
 import { db } from "../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
-
 import * as XLSX from "xlsx";
 import { useAlert } from "../../context/AlertContext";
 
@@ -99,15 +98,31 @@ export default function AttendanceHistory() {
         type: "base64",
       });
 
-      // 6) Create downloadable file
       const fileName = `${sessionId}_attendance.xlsx`;
 
-      const link = document.createElement("a");
-      link.href =
+      const fileUrl =
         "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," +
         base64Excel;
 
+      // ✅ If running inside Android WebView App
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({
+            type: "download",
+            fileName: fileName,
+            fileUrl: fileUrl,
+          })
+        );
+
+        showAlert("Downloading Excel file in app...", "success");
+        return;
+      }
+
+      // ✅ Normal browser download
+      const link = document.createElement("a");
+      link.href = fileUrl;
       link.download = fileName;
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

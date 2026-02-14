@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import beepSound from "../../assets/beep.mp3";
 import {
   doc,
   setDoc,
@@ -14,11 +13,11 @@ import { db, auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "../../context/AlertContext";
 
-const MAX_DISTANCE = 80;
+const MAX_DISTANCE = 80; // meters
 const MAX_ACCURACY = 200;
 
-const LEAVE_LIMIT = 1; // seconds allowed outside tab before absent
-const HEARTBEAT_INTERVAL = 1500; // 3 sec
+const LEAVE_LIMIT = 2; // seconds allowed outside tab/app
+const HEARTBEAT_INTERVAL = 1000; // 1 sec heartbeat
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
@@ -38,11 +37,6 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-const playBeep = () => {
-  const audio = new Audio(beepSound);
-  audio.play().catch((err) => console.log("Beep blocked:", err));
-};
-
 export default function Scan() {
   const navigate = useNavigate();
   const user = auth.currentUser;
@@ -55,29 +49,7 @@ export default function Scan() {
   const heartbeatIntervalRef = useRef(null);
   const leaveTimeoutRef = useRef(null);
 
-  const messages = [
-    "Wait for teacher...",
-    "Teacher is calculating attendance...",
-    "Don't close this tab...",
-    "Teacher is busy, please wait...",
-    "Verifying your attendance...",
-    "Almost done... stay here!",
-  ];
-
-  const [waitMsg, setWaitMsg] = useState(messages[0]);
-
   const qrRegionId = "qr-reader";
-
-  // Random waiting message changer
-  useEffect(() => {
-    if (!waiting) return;
-
-    const interval = setInterval(() => {
-      setWaitMsg(messages[Math.floor(Math.random() * messages.length)]);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [waiting]);
 
   // Start Heartbeat
   const startHeartbeat = (pendingRef) => {
@@ -105,7 +77,7 @@ export default function Scan() {
     }
   };
 
-  // 🔥 STRICT ANTI CHEAT: leaving tab/app logic
+  // 🔥 STRICT TAB CLOSE / APP MINIMIZE DETECTION
   useEffect(() => {
     if (!waiting || !pendingPath) return;
 
@@ -115,9 +87,7 @@ export default function Scan() {
           status: "paused",
           pausedAt: serverTimestamp(),
         });
-      } catch (err) {
-        console.log("Failed to mark paused:", err);
-      }
+      } catch {}
     };
 
     const markLeft = async () => {
@@ -126,21 +96,19 @@ export default function Scan() {
           status: "left",
           leftAt: serverTimestamp(),
         });
-      } catch (err) {
-        console.log("Failed to mark left:", err);
-      }
+      } catch {}
     };
 
     const handleVisibilityChange = async () => {
       if (document.hidden) {
         await markPaused();
 
-        // Start timer
+        // Start strict timer (2 sec)
         leaveTimeoutRef.current = setTimeout(async () => {
           await markLeft();
         }, LEAVE_LIMIT * 1000);
       } else {
-        // Cancel timer if student returns
+        // Cancel timer if student comes back fast
         if (leaveTimeoutRef.current) {
           clearTimeout(leaveTimeoutRef.current);
           leaveTimeoutRef.current = null;
@@ -155,6 +123,7 @@ export default function Scan() {
       }
     };
 
+    // If tab is closed completely
     const handleBeforeUnload = async (e) => {
       await markLeft();
       e.preventDefault();
@@ -185,60 +154,38 @@ export default function Scan() {
           (d) =>
             d.label.toLowerCase().includes("back") ||
             d.label.toLowerCase().includes("rear") ||
-            d.label.toLowerCase().includes("environment"),
+            d.label.toLowerCase().includes("environment")
         );
-
-        if (!backCam) {
-          backCam = devices.find(
-            (d) =>
-              !d.label.toLowerCase().includes("wide") &&
-              !d.label.toLowerCase().includes("depth"),
-          );
-        }
 
         if (!backCam) backCam = devices[devices.length - 1];
 
-        const cameraId = backCam.id;
-
         html5QrCode
           .start(
-            cameraId,
+            backCam.id,
             {
               fps: 15,
               qrbox: { width: 280, height: 280 },
-              videoConstraints: {
-                facingMode: { exact: "environment" },
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-              },
             },
             (decodedText) => {
               if (!scanned && !waiting) {
                 setScanned(true);
                 html5QrCode.stop();
-
-                // ✅ Beep sound on successful scan
-                playBeep();
-
                 handleScan(decodedText);
               }
             },
             (scanErr) => {
               console.warn("SCAN ERROR:", scanErr);
-            },
+            }
           )
           .catch((err) => {
             console.error("CAMERA START FAILED:", err);
-            showAlert(
-              "Camera failed to start. Allow camera permissions & retry.",
-              "error",
-            );
+            showAlert("Camera permission required!", "error");
             navigate(-1);
           });
       })
       .catch((err) => {
         console.error("CAMERA FETCH ERROR:", err);
-        showAlert("No camera found on this device.", "error");
+        showAlert("No camera found!", "error");
         navigate(-1);
       });
 
@@ -246,13 +193,20 @@ export default function Scan() {
       try {
         html5QrCode.stop();
       } catch {}
-
       stopHeartbeat();
     };
   }, []);
 
   const handleScan = async (data) => {
-    const [classCode, sessionId] = data.split("|");
+    const parts = data.split("|");
+
+    if (parts.length !== 2) {
+      showAlert("Invalid QR!", "error");
+      navigate(-1);
+      return;
+    }
+
+    const [classCode, sessionId] = parts;
     verifyScan(classCode, sessionId);
   };
 
@@ -263,9 +217,7 @@ export default function Scan() {
       return;
     }
 
-    // show waiting instantly
     setWaiting(true);
-    setWaitMsg("Verifying your location...");
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -274,12 +226,23 @@ export default function Scan() {
           lng: pos.coords.longitude,
         };
 
+        const accuracy = pos.coords.accuracy;
+
+        if (accuracy > MAX_ACCURACY) {
+          showAlert(
+            "GPS accuracy too low! Enable High Accuracy Location.",
+            "error"
+          );
+          navigate(-1);
+          return;
+        }
+
         const sessionRef = doc(
           db,
           "classrooms",
           classCode,
           "sessions",
-          sessionId,
+          sessionId
         );
 
         const snap = await getDoc(sessionRef);
@@ -298,42 +261,31 @@ export default function Scan() {
           return;
         }
 
-        // Distance + Accuracy Check
-        if (sessionData.teacherLat && sessionData.teacherLng) {
-          const dist = getDistance(
-            studentLoc.lat,
-            studentLoc.lng,
-            sessionData.teacherLat,
-            sessionData.teacherLng,
-          );
+        // Teacher location must exist
+        if (!sessionData.teacherLat || !sessionData.teacherLng) {
+          showAlert("Teacher location missing. Attendance blocked!", "error");
+          navigate(-1);
+          return;
+        }
 
-          const accuracy = pos.coords.accuracy;
-          const allowedDistance = MAX_DISTANCE + accuracy;
+        // Distance check
+        const dist = getDistance(
+          studentLoc.lat,
+          studentLoc.lng,
+          sessionData.teacherLat,
+          sessionData.teacherLng
+        );
 
-          if (accuracy > MAX_ACCURACY) {
-            showAlert(
-              "GPS accuracy too low. Turn on High Accuracy GPS / move near window.",
-              "error",
-            );
-            navigate(-1);
-            return;
-          }
+        const allowedDistance = MAX_DISTANCE + accuracy;
 
-          if (dist > allowedDistance) {
-            showAlert("You are too far from classroom!", "error");
-            navigate(-1);
-            return;
-          }
+        if (dist > allowedDistance) {
+          showAlert("You are too far from classroom!", "error");
+          navigate(-1);
+          return;
         }
 
         // Student must be joined check
-        const studentRef = doc(
-          db,
-          "classrooms",
-          classCode,
-          "students",
-          user.uid,
-        );
+        const studentRef = doc(db, "classrooms", classCode, "students", user.uid);
 
         const studentSnap = await getDoc(studentRef);
 
@@ -352,14 +304,16 @@ export default function Scan() {
           "sessions",
           sessionId,
           "pending",
-          user.uid,
+          user.uid
         );
 
+        // Create pending record
         await setDoc(pendingRef, {
           uid: user.uid,
           name: student?.studentName || "Unknown",
           rollNo: student?.rollNo || "N/A",
           location: studentLoc,
+          accuracy: accuracy,
           joinedAt: serverTimestamp(),
           lastSeen: serverTimestamp(),
           status: "waiting",
@@ -367,18 +321,20 @@ export default function Scan() {
 
         setPendingPath(pendingRef);
 
-        setWaiting(true);
-        setWaitMsg("Attendance request sent. Please wait...");
-
-        // Start heartbeat immediately
+        // Start heartbeat
         startHeartbeat(pendingRef);
 
         waitForTeacherStop(sessionRef, pendingRef);
       },
       () => {
-        showAlert("Location required!", "error");
+        showAlert("Location required to mark attendance!", "error");
         navigate(-1);
       },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
     );
   };
 
@@ -426,7 +382,7 @@ export default function Scan() {
           className="mt-4 font-medium text-center px-4 py-2 rounded-lg border-theme bg-card"
           style={{ color: "var(--color-primary)" }}
         >
-          {waitMsg}
+          Don’t close app/tab! Attendance verifying...
         </p>
       )}
     </div>

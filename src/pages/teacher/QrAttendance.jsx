@@ -22,7 +22,9 @@ const QrAttendance = () => {
 
   const { showAlert, showConfirm } = useAlert();
   const navigate = useNavigate();
-  const HEARTBEAT_LIMIT = 3; // seconds
+
+  // ✅ STRICT SETTINGS
+  const HEARTBEAT_LIMIT = 2; // seconds (if lastSeen older than this => absent)
 
   const generateSessionId = () =>
     "SESSION_" + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -41,7 +43,7 @@ const QrAttendance = () => {
       },
       (err, url) => {
         if (!err) setQrUrl(url);
-      },
+      }
     );
   };
 
@@ -49,9 +51,20 @@ const QrAttendance = () => {
     const newSessionId = generateSessionId();
     setSessionId(newSessionId);
 
+    // ✅ Teacher location compulsory
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude, accuracy } = pos.coords;
+
+        // If teacher accuracy bad -> don't start
+        if (accuracy > 200) {
+          showAlert(
+            "GPS accuracy too low! Turn on High Accuracy Location.",
+            "error"
+          );
+          navigate(-1);
+          return;
+        }
 
         await setDoc(
           doc(db, "classrooms", classCode, "sessions", newSessionId),
@@ -63,29 +76,24 @@ const QrAttendance = () => {
             startedAt: serverTimestamp(),
             teacherLat: latitude,
             teacherLng: longitude,
-          },
+            teacherAccuracy: accuracy,
+          }
         );
 
         generateQr(`${classCode}|${newSessionId}`);
         setQrActive(true);
+
+        showAlert("QR Session Started!", "success");
       },
       async () => {
-        await setDoc(
-          doc(db, "classrooms", classCode, "sessions", newSessionId),
-          {
-            classCode,
-            sessionId: newSessionId,
-            type: "qr",
-            status: "active",
-            startedAt: serverTimestamp(),
-            teacherLat: null,
-            teacherLng: null,
-          },
-        );
-
-        generateQr(`${classCode}|${newSessionId}`);
-        setQrActive(true);
+        showAlert("Location permission is required to start attendance!", "error");
+        navigate(-1);
       },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
     );
   };
 
@@ -98,7 +106,7 @@ const QrAttendance = () => {
         "classrooms",
         classCode,
         "sessions",
-        sessionId,
+        sessionId
       );
 
       const pendingRef = collection(
@@ -107,7 +115,7 @@ const QrAttendance = () => {
         classCode,
         "sessions",
         sessionId,
-        "pending",
+        "pending"
       );
 
       const pendingSnap = await getDocs(pendingRef);
@@ -117,17 +125,17 @@ const QrAttendance = () => {
         "attendance",
         classCode,
         "sessions",
-        sessionId,
+        sessionId
       );
 
       // Save session metadata
       await setDoc(
-        doc(db, "attendance", classCode, "sessions", sessionId),
+        historySessionRef,
         {
           sessionId,
           endedAt: serverTimestamp(),
         },
-        { merge: true },
+        { merge: true }
       );
 
       const studentsColRef = collection(historySessionRef, "students");
@@ -145,8 +153,10 @@ const QrAttendance = () => {
         const now = new Date();
         const diffSeconds = (now - lastSeen) / 1000;
 
+        // ❌ If heartbeat missing => absent
         if (diffSeconds > HEARTBEAT_LIMIT) continue;
 
+        // ✅ Mark present
         await setDoc(doc(studentsColRef, p.id), {
           uid: p.id,
           name: data?.name || "Unknown",
@@ -161,7 +171,7 @@ const QrAttendance = () => {
         await deleteDoc(doc(pendingRef, p.id));
       }
 
-      // Close session in classrooms
+      // Close session
       await updateDoc(sessionRef, {
         status: "closed",
         endedAt: serverTimestamp(),
@@ -170,7 +180,6 @@ const QrAttendance = () => {
       setQrActive(false);
 
       showAlert("Session stopped and attendance saved!", "success");
-      
     } catch (error) {
       showAlert("Failed to stop session!", "error");
       console.log(error);
@@ -196,7 +205,7 @@ const QrAttendance = () => {
             async () => {
               navigate(-1);
             },
-            "Yes",
+            "Yes"
           );
         }}
         className="fixed top-24 left-5 flex items-center gap-2 px-4 py-2 bg-input border-theme rounded-lg hover:brightness-90 transition cursor-pointer z-10"
@@ -243,7 +252,7 @@ const QrAttendance = () => {
                     await stopQrSession();
                     navigate("/teacher/dashboard");
                   },
-                  "Stop",
+                  "Stop"
                 )
               }
               className="px-4 py-2 rounded-lg font-medium text-white bg-purple-600 hover:brightness-90 transition cursor-pointer"
@@ -252,7 +261,6 @@ const QrAttendance = () => {
             </button>
           </div>
         )}
-        
       </div>
     </div>
   );
