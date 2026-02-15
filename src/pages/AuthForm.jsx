@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase/firebaseConfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -10,6 +10,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   sendEmailVerification,
+  onAuthStateChanged,
 } from "firebase/auth";
 
 const AuthForm = () => {
@@ -28,6 +29,28 @@ const AuthForm = () => {
     password: "",
     role: "",
   });
+
+  // ✅ AUTO LOGIN FIX (IMPORTANT)
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          const userData = userDoc.data();
+
+          if (userData?.role === "teacher") {
+            navigate("/teacher/dashboard");
+          } else if (userData?.role === "student") {
+            navigate("/student/dashboard");
+          }
+        } catch (err) {
+          console.log("Auto Login Error:", err);
+        }
+      }
+    });
+
+    return () => unsub();
+  }, [navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -49,7 +72,7 @@ const AuthForm = () => {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
-        formData.password,
+        formData.password
       );
 
       const user = userCredential.user;
@@ -71,7 +94,7 @@ const AuthForm = () => {
 
       showModalAlert(
         "Signup successful! Verification email has been sent.\n\nPlease check Inbox, Spam and Promotions tab.",
-        "success",
+        "success"
       );
 
       setMode("login");
@@ -88,7 +111,7 @@ const AuthForm = () => {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         formData.email,
-        formData.password,
+        formData.password
       );
 
       const user = userCredential.user;
@@ -96,9 +119,10 @@ const AuthForm = () => {
       // ❌ Block login if not verified
       if (!user.emailVerified) {
         await sendEmailVerification(user);
+
         showModalAlert(
           "Your email is not verified yet.\n\nWe have sent the verification email again.\nPlease check Inbox, Spam and Promotions tab.",
-          "error",
+          "error"
         );
 
         return;
@@ -107,12 +131,7 @@ const AuthForm = () => {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.data();
 
-      localStorage.setItem("attendify_loggedin", "true");
-      localStorage.setItem("attendify_role", userData.role);
-      localStorage.setItem("attendify_uid", user.uid);
-
       showAlert("Login Successful!", "success");
-      
 
       setTimeout(() => {
         if (userData.role === "teacher") {
@@ -156,6 +175,7 @@ const AuthForm = () => {
               mode === "login" ? "text-white" : "text-muted"
             }`}
             onClick={() => setMode("login")}
+            type="button"
           >
             Login
           </button>
@@ -165,6 +185,7 @@ const AuthForm = () => {
               mode === "signup" ? "text-white" : "text-muted"
             }`}
             onClick={() => setMode("signup")}
+            type="button"
           >
             Sign up
           </button>
