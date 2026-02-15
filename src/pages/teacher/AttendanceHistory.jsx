@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Download } from "lucide-react";
 import { db } from "../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
+
 import * as XLSX from "xlsx";
 import { useAlert } from "../../context/AlertContext";
 
@@ -15,22 +16,27 @@ export default function AttendanceHistory() {
 
   useEffect(() => {
     const load = async () => {
-      const refData = collection(db, "attendance", classCode, "sessions");
-      const snap = await getDocs(refData);
+      try {
+        const refData = collection(db, "attendance", classCode, "sessions");
+        const snap = await getDocs(refData);
 
-      let result = [];
-      snap.forEach((d) => {
-        result.push({
-          sessionId: d.id,
-          ...d.data(),
+        let result = [];
+        snap.forEach((d) => {
+          result.push({
+            sessionId: d.id,
+            ...d.data(),
+          });
         });
-      });
 
-      result.sort(
-        (a, b) => (b.endedAt?.seconds || 0) - (a.endedAt?.seconds || 0)
-      );
+        result.sort(
+          (a, b) => (b.endedAt?.seconds || 0) - (a.endedAt?.seconds || 0)
+        );
 
-      setSessions(result);
+        setSessions(result);
+      } catch (err) {
+        console.log(err);
+        showAlert("Failed to load attendance sessions!", "error");
+      }
     };
 
     load();
@@ -47,6 +53,7 @@ export default function AttendanceHistory() {
         classCode,
         "students"
       );
+
       const classSnap = await getDocs(classStudentsRef);
 
       let allStudents = [];
@@ -77,9 +84,10 @@ export default function AttendanceHistory() {
         presentMap[data.uid] = true;
       });
 
-      // 3) Format final list
+      // 3) Sort roll no
       allStudents.sort((a, b) => parseInt(a.rollNo) - parseInt(b.rollNo));
 
+      // 4) Format Excel rows
       const formatted = allStudents.map((s, index) => ({
         "S.No": index + 1,
         "Roll No": s.rollNo,
@@ -87,12 +95,12 @@ export default function AttendanceHistory() {
         Status: presentMap[s.uid] ? "Present" : "Absent",
       }));
 
-      // 4) Create workbook
+      // 5) Create workbook
       const worksheet = XLSX.utils.json_to_sheet(formatted);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
 
-      // 5) Convert to base64
+      // 6) Convert to base64
       const base64Excel = XLSX.write(workbook, {
         bookType: "xlsx",
         type: "base64",
@@ -100,17 +108,13 @@ export default function AttendanceHistory() {
 
       const fileName = `${sessionId}_attendance.xlsx`;
 
-      const fileUrl =
-        "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," +
-        base64Excel;
-
-      // ✅ If running inside Android WebView App
+      // ✅ If inside React Native WebView App
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(
           JSON.stringify({
-            type: "download",
+            type: "downloadExcel",
             fileName: fileName,
-            fileUrl: fileUrl,
+            base64: base64Excel,
           })
         );
 
@@ -118,7 +122,11 @@ export default function AttendanceHistory() {
         return;
       }
 
-      // ✅ Normal browser download
+      // ✅ Browser download (Normal Website)
+      const fileUrl =
+        "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," +
+        base64Excel;
+
       const link = document.createElement("a");
       link.href = fileUrl;
       link.download = fileName;
