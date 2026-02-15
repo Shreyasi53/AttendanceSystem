@@ -17,7 +17,16 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// ✅ Force persistence
 setPersistence(auth, browserLocalPersistence)
-  .then(() => console.log("Persistence enabled"))
+  .then(() => console.log("Firebase persistence enabled"))
   .catch((err) => console.log("Persistence error:", err));
 
+// ✅ Auto restore session
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("User session restored:", user.email);
+  } else {
+    console.log("No user session found");
+  }
+});
