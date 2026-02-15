@@ -13,60 +13,66 @@ import AttendanceHistory from "./pages/teacher/AttendanceHistory";
 import TeacherSessionStudents from "./pages/teacher/TeacherSessionStudents";
 
 import { AlertProvider } from "./context/AlertContext";
-
-import { auth } from "./firebase/firebaseConfig";
+import { auth, db } from "./firebase/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
-/* ✅ PROTECTED ROUTE (FIXED - NO BLACK SCREEN) */
+/* ✅ LOADING SCREEN */
+const LoadingScreen = () => {
+  return (
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#000",
+        color: "#fff",
+        fontSize: "18px",
+      }}
+    >
+      Loading Attendify...
+    </div>
+  );
+};
+
+/* ✅ PROTECTED ROUTE */
 const ProtectedRoute = ({ children, role }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-
-  const loggedIn = localStorage.getItem("attendify_loggedin");
-  const savedRole = localStorage.getItem("attendify_role");
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (currentUser) => {
+    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        setUser(null);
+        setUserRole(null);
+        setLoading(false);
+        return;
+      }
+
       setUser(currentUser);
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        const data = userDoc.data();
+
+        setUserRole(data?.role || null);
+      } catch (err) {
+        console.log("Role fetch error:", err);
+      }
+
       setLoading(false);
     });
 
     return () => unsub();
   }, []);
 
-  // ❌ Not logged in (localStorage)
-  if (!loggedIn) {
-    return <Navigate to="/" replace />;
-  }
+  if (loading) return <LoadingScreen />;
 
-  // ❌ Role mismatch
-  if (role && savedRole !== role) {
-    return <Navigate to="/" replace />;
-  }
+  if (!user) return <Navigate to="/" replace />;
 
-  // ⏳ Firebase session restoring
-  if (loading) {
-    return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          background: "#000",
-          color: "#fff",
-          fontSize: "18px",
-        }}
-      >
-        Loading Attendify...
-      </div>
-    );
-  }
-
-  // ❌ Firebase user not found
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
+  if (role && userRole !== role) return <Navigate to="/" replace />;
 
   return children;
 };
