@@ -1,7 +1,11 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  onAuthStateChanged,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVUyl1xjfo3xuFSN_qizs6NCYuXjjmXio",
@@ -10,10 +14,11 @@ const firebaseConfig = {
   storageBucket: "attendance-app-72c87.firebasestorage.app",
   messagingSenderId: "81403370854",
   appId: "1:81403370854:web:177cb02759e0c3b93c3ca7",
-  measurementId: "G-K5MSR8ZJRT"
+  measurementId: "G-K5MSR8ZJRT",
 };
 
 const app = initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
@@ -22,10 +27,10 @@ setPersistence(auth, browserLocalPersistence)
   .then(() => console.log("Firebase persistence enabled"))
   .catch((err) => console.log("Persistence error:", err));
 
-// ✅ Auto restore session
+// ✅ Restore user automatically
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log("User session restored:", user.email);
+    console.log("User restored:", user.email);
   } else {
     console.log("No user session found");
   }

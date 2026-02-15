@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+
 import AuthForm from "./pages/AuthForm";
 import AppLayout from "./layouts/AppLayout";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -9,18 +11,62 @@ import QrAttendance from "./pages/teacher/QrAttendance";
 import Scan from "./pages/student/Scan";
 import AttendanceHistory from "./pages/teacher/AttendanceHistory";
 import TeacherSessionStudents from "./pages/teacher/TeacherSessionStudents";
-import { AlertProvider } from "./context/AlertContext";
-import { auth } from "./firebase/firebaseConfig";
 
-/* 🔒 PROTECTED ROUTE */
+import { AlertProvider } from "./context/AlertContext";
+
+import { auth } from "./firebase/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
+
+/* ✅ PROTECTED ROUTE (FIXED - NO BLACK SCREEN) */
 const ProtectedRoute = ({ children, role }) => {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
   const loggedIn = localStorage.getItem("attendify_loggedin");
   const savedRole = localStorage.getItem("attendify_role");
-  const user = auth.currentUser;
 
-  if (!loggedIn) return <Navigate to="/" replace />;
-  if (role && savedRole !== role) return <Navigate to="/" replace />;
-  if (!user) return null;
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, []);
+
+  // ❌ Not logged in (localStorage)
+  if (!loggedIn) {
+    return <Navigate to="/" replace />;
+  }
+
+  // ❌ Role mismatch
+  if (role && savedRole !== role) {
+    return <Navigate to="/" replace />;
+  }
+
+  // ⏳ Firebase session restoring
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          background: "#000",
+          color: "#fff",
+          fontSize: "18px",
+        }}
+      >
+        Loading Attendify...
+      </div>
+    );
+  }
+
+  // ❌ Firebase user not found
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
   return children;
 };
@@ -30,8 +76,10 @@ function App() {
     <AlertProvider>
       <Router>
         <Routes>
+          {/* AUTH PAGE */}
           <Route path="/" element={<AuthForm />} />
 
+          {/* TEACHER ROUTES */}
           <Route
             path="/teacher"
             element={
@@ -51,6 +99,7 @@ function App() {
             />
           </Route>
 
+          {/* STUDENT ROUTES */}
           <Route
             path="/student"
             element={
@@ -62,6 +111,9 @@ function App() {
             <Route path="dashboard" element={<StudentDashboard />} />
             <Route path="scan" element={<Scan />} />
           </Route>
+
+          {/* FALLBACK */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </AlertProvider>
