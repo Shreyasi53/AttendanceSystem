@@ -107,7 +107,12 @@ const AuthForm = () => {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.data();
 
+      localStorage.setItem("attendify_loggedin", "true");
+      localStorage.setItem("attendify_role", userData.role);
+      localStorage.setItem("attendify_uid", user.uid);
+
       showAlert("Login Successful!", "success");
+      
 
       setTimeout(() => {
         if (userData.role === "teacher") {

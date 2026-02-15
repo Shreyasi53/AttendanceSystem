@@ -71,9 +71,21 @@ const AppLayout = ({ role = "teacher" }) => {
     if (item.action === "logout") {
       showConfirm(
         "Are you sure you want to logout?",
-        () => {
-          signOut(auth).then(() => navigate("/"));
-          showAlert("Logged out successfully!", "success");
+        async () => {
+          try {
+            await signOut(auth);
+
+            // ✅ CLEAR LOGIN STATE (IMPORTANT FOR APP)
+            localStorage.removeItem("attendify_loggedin");
+            localStorage.removeItem("attendify_role");
+            localStorage.removeItem("attendify_uid");
+
+            showAlert("Logged out successfully!", "success");
+            navigate("/");
+          } catch (err) {
+            console.log(err);
+            showAlert("Logout failed!", "error");
+          }
         },
         "Logout",
       );
@@ -104,9 +116,18 @@ const AppLayout = ({ role = "teacher" }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col " style={{ background: "var(--color-bg)", color: "var(--color-text)" }}>
+    <div
+      className="min-h-screen flex flex-col "
+      style={{ background: "var(--color-bg)", color: "var(--color-text)" }}
+    >
       {/* NAV */}
-      <header className="h-16 flex items-center px-4 border-b" style={{ background: "var(--color-bg)", borderColor: "var(--color-border)" }}>
+      <header
+        className="h-16 flex items-center px-4 border-b"
+        style={{
+          background: "var(--color-bg)",
+          borderColor: "var(--color-border)",
+        }}
+      >
         <div className="relative" ref={dropdownRef}>
           <Avatar name={user?.displayName || "User"} />
 
@@ -138,7 +159,9 @@ const AppLayout = ({ role = "teacher" }) => {
 
                     <span className="flex-1">
                       {item.action === "theme"
-                        ? (theme === "dark" ? "Light Mode" : "Dark Mode")
+                        ? theme === "dark"
+                          ? "Light Mode"
+                          : "Dark Mode"
                         : item.name}
                     </span>
                   </button>
