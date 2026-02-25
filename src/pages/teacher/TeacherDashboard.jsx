@@ -190,7 +190,7 @@ const TeacherDashboard = () => {
                         <span>Copy</span>
                       </button>
 
-                      <div className="h-[1px] bg-[var(--color-border)]" />
+                      <div className="h-[1px] bg-(--color-border)" />
                       <button
                         onClick={() => {
                           showConfirm(
